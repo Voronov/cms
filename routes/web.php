@@ -79,6 +79,9 @@ Route::middleware(['auth', 'verified', 'approved', 'nocache'])->prefix('admin')-
     Route::post('/menus/{menu}/items', [\App\Http\Controllers\MenuController::class, 'saveItems'])->name('admin.menus.items.save');
     Route::resource('navigation', NavigationItemController::class, ['as' => 'admin'])->except(['show']);
     Route::resource('crons', \App\Http\Controllers\CronTaskController::class, ['as' => 'admin'])->only(['index', 'show']);
+    Route::post('/crons/{task}/run', [\App\Http\Controllers\CronTaskController::class, 'run'])->name('admin.crons.run');
+    Route::post('/crons/{task}/toggle', [\App\Http\Controllers\CronTaskController::class, 'toggle'])->name('admin.crons.toggle');
+
 
 
     Route::get('/entities/{type}', [EntityController::class, 'index'])->name('admin.entities.index');

@@ -9,6 +9,19 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline">{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline">{{ session('error') }}</span>
+        </div>
+    @endif
+
+
     <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead class="bg-gray-50 dark:bg-gray-700">
@@ -42,8 +55,20 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {{ $task->last_run_at ? $task->last_run_at->diffForHumans() : 'N/A' }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="{{ route('admin.crons.show', $task) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">View Logs</a>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <a href="{{ route('admin.crons.show', $task) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Logs</a>
+                        
+                        <form action="{{ route('admin.crons.run', $task) }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300">Run Now</button>
+                        </form>
+
+                        <form action="{{ route('admin.crons.toggle', $task) }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="{{ $task->is_enabled ? 'text-orange-600 hover:text-orange-900' : 'text-blue-600 hover:text-blue-900' }}">
+                                {{ $task->is_enabled ? 'Disable' : 'Enable' }}
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 @endforeach
