@@ -1,59 +1,83 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MY CMS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern, flexible Content Management System built with Laravel and DDEV.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Page Editor**: Dynamic block-based page building.
+- **Entity Management**: Flexible content structures (Articles, News, Products).
+- **Media Library**: Chunked file uploads with built-in image cropping.
+- **Multilingual**: Native support for multiple locales.
+- **SEO Ready**: Custom slugs, meta tags, and automated redirects.
+- **DDEV Integration**: Optimized local development environment.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Prerequisites
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- [DDEV](https://ddev.readthedocs.io/en/stable/users/install/ddev-installation/)
+- [Docker](https://docs.docker.com/get-docker/)
 
-## Learning Laravel
+## Installation
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+1. **Clone the repository**:
+   ```bash
+   git clone git@github.com:Voronov/cms.git
+   cd cms
+   ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+2. **Start DDEV**:
+   ```bash
+   ddev start
+   ```
 
-## Laravel Sponsors
+3. **Install dependencies**:
+   ```bash
+   ddev composer install
+   ddev npm install
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+4. **Setup environment**:
+   ```bash
+   cp .env.example .env
+   ddev artisan key:generate
+   ```
 
-### Premium Partners
+5. **Run migrations and seeders**:
+   ```bash
+   ddev artisan migrate --seed
+   ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+6. **Build assets**:
+   ```bash
+   ddev npm run build
+   ```
 
-## Contributing
+The site will be accessible at: [https://cms.ddev.site](https://cms.ddev.site)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Development Commands
 
-## Code of Conduct
+### DDEV Commands
+- `ddev start`: Start the local environment.
+- `ddev stop`: Stop the local environment.
+- `ddev describe`: View project status and URLs.
+- `ddev ssh`: Access the web container shell.
+- `ddev logs -f`: View real-time logs.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Artisan Commands (via DDEV)
+- `ddev artisan migrate`: Run database migrations.
+- `ddev artisan make:controller Name`: Create a new controller.
+- `ddev artisan route:list`: List all registered routes.
 
-## Security Vulnerabilities
+### NPM Commands (via DDEV)
+- `ddev npm run dev`: Start Vite development server.
+- `ddev npm run build`: Build assets for production.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Project Structure
+
+- `resources/entities/`: YAML definitions for custom entities.
+- `app/Models/`: Core data models (Entity, Page, Form, etc.).
+- `public/js/`: Frontend editor logic (page-editor.js, repeater-field.js).
+- `resources/views/admin/`: Admin panel templates.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
