@@ -1,0 +1,130 @@
+name: News
+singular: News Item
+plural: News
+icon: document
+description: News articles and announcements
+slug_field: title
+
+list_layout: grid
+list_columns: 3
+default_pagination: 12
+template_map:
+  grid: components.blocks.partials.entity-card
+  list: components.blocks.partials.entity-list-item
+  masonry: components.blocks.partials.entity-card
+
+detail_layout: news-detail
+
+categories:
+  - name: General
+    slug: general
+    description: General news and updates
+  - name: Technology
+    slug: technology
+    description: Technology-related news
+  - name: Business
+    slug: business
+    description: Business and finance news
+  - name: Sports
+    slug: sports
+    description: Sports news and updates
+  - name: Entertainment
+    slug: entertainment
+    description: Entertainment and culture news
+  - name: Politics
+    slug: politics
+    description: Political news and government updates
+  - name: Health
+    slug: health
+    description: Health and medical news
+  - name: Science
+    slug: science
+    description: Scientific discoveries and research
+  - name: World
+    slug: world
+    description: International and world news
+  - name: Local
+    slug: local
+    description: Local community news
+
+seo:
+  enabled: true
+  title_field: title
+  description_field: excerpt
+  image_field: featured_image
+
+fields:
+  - name: title
+    label: Title
+    type: text
+    required: true
+    placeholder: Enter news title
+    validation: required|string|max:255
+    
+  - name: slug
+    label: URL Slug
+    type: text
+    required: true
+    auto_generate: title
+    placeholder: auto-generated-from-title
+    validation: required|string|max:255|unique:entities,content->slug
+    
+  - name: excerpt
+    label: Excerpt
+    type: textarea
+    required: false
+    placeholder: Brief summary of the news
+    validation: string|max:500
+    
+  - name: content
+    label: Content
+    type: wysiwyg
+    required: true
+    placeholder: Write your news content here
+    validation: required|string
+    
+  - name: featured_image
+    label: Featured Image
+    type: media
+    required: false
+    accept: image/*
+    validation: nullable|string
+    
+  - name: published_at
+    label: Publish Date
+    type: datetime
+    required: true
+    default: now
+    validation: required|date
+    
+  - name: expires_at
+    label: Expiration Date
+    type: datetime
+    required: false
+    placeholder: Leave empty for no expiration
+    validation: nullable|date|after:published_at
+    
+  - name: author
+    label: Author
+    type: text
+    required: false
+    placeholder: Author name
+    validation: nullable|string|max:255
+    
+  - name: category
+    label: Category
+    type: category
+    required: false
+    validation: nullable|string
+    help: Select a category for this news item
+    
+  - name: status
+    label: Status
+    type: select
+    required: true
+    default: draft
+    options:
+      draft: Draft
+      published: Published
+      archived: Archived
+    validation: required|in:draft,published,archived

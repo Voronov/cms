@@ -1,0 +1,51 @@
+name: Image & Text
+description: Image with text content side by side
+layout: default
+layouts:
+  - default
+  - image-left
+  - image-right
+  - stacked
+  - overlay
+  - split
+preview:
+  template: |
+    <div class="p-4 bg-white dark:bg-gray-800 rounded border flex items-center space-x-4">
+      <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center text-xs text-gray-400">Image</div>
+      <div>
+        <h4 class="font-semibold text-gray-900 dark:text-white">[[ title || 'No Title' ]]</h4>
+        <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">[[ content || 'No content' ]]</p>
+      </div>
+    </div>
+fields:
+  - name: layout
+    label: Block Layout
+    type: select
+    default: default
+    options:
+      default: Default (Image Left)
+      image-left: Image Left
+      image-right: Image Right
+      stacked: Stacked (Image Top)
+      overlay: Overlay (Text on Image)
+      split: Split (50/50 No Gap)
+    validation: required|string
+    help: Select the layout arrangement
+    
+  - name: title
+    label: Title
+    type: input
+    placeholder: Block Title
+  - name: image
+    label: Image
+    type: file
+  - name: content
+    label: Content
+    type: textarea
+    placeholder: Content description...
+  - name: align
+    label: Image Alignment
+    type: select
+    options:
+      left: Left
+      right: Right

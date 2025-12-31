@@ -1,0 +1,21 @@
+name: Text Block
+description: A simple text content block
+layout: default
+layouts:
+  - default
+  - centered
+  - boxed
+  - highlight
+  - wide
+preview:
+  template: |
+    <div class="p-4 bg-white dark:bg-gray-800 rounded border">
+      <span class="font-semibold text-gray-900 dark:text-white">Text Block</span>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-3">[[ content || 'No content' ]]</p>
+      <div class="mt-2 text-xs text-gray-500">Layout: [[ layout || 'default' ]]</div>
+    </div>
+fields:
+  - name: content
+    label: Content
+    type: textarea
+    placeholder: Enter your text here...

@@ -1,0 +1,153 @@
+name: Product
+singular: Product
+plural: Products
+icon: clipboard
+description: Product catalog items
+slug_field: name
+
+list_layout: grid
+list_columns: 4
+default_pagination: 16
+template_map:
+  grid: components.blocks.partials.entity-card
+  shop: components.blocks.partials.entity-card
+  catalog: components.blocks.partials.entity-list-item
+
+detail_layout: product-detail
+
+categories:
+  - name: Electronics
+    slug: electronics
+    description: Electronic devices and gadgets
+  - name: Computers & Laptops
+    slug: computers-laptops
+    description: Computers, laptops, and accessories
+  - name: Smartphones & Tablets
+    slug: smartphones-tablets
+    description: Mobile devices and tablets
+  - name: Clothing & Fashion
+    slug: clothing-fashion
+    description: Clothing and fashion items
+  - name: Home & Garden
+    slug: home-garden
+    description: Home improvement and garden supplies
+  - name: Sports & Outdoors
+    slug: sports-outdoors
+    description: Sports equipment and outdoor gear
+  - name: Books & Media
+    slug: books-media
+    description: Books, movies, and media
+  - name: Toys & Games
+    slug: toys-games
+    description: Toys and gaming products
+  - name: Health & Beauty
+    slug: health-beauty
+    description: Health and beauty products
+  - name: Automotive
+    slug: automotive
+    description: Auto parts and accessories
+  - name: Office Supplies
+    slug: office-supplies
+    description: Office and stationery supplies
+  - name: Pet Supplies
+    slug: pet-supplies
+    description: Pet food and accessories
+
+seo:
+  enabled: true
+  title_field: name
+  description_field: description
+  image_field: main_image
+
+fields:
+  - name: name
+    label: Product Name
+    type: text
+    required: true
+    placeholder: Enter product name
+    validation: required|string|max:255
+    
+  - name: slug
+    label: URL Slug
+    type: text
+    required: true
+    auto_generate: name
+    placeholder: auto-generated-from-name
+    validation: required|string|max:255|unique:entities,content->slug
+    
+  - name: sku
+    label: SKU
+    type: text
+    required: false
+    placeholder: Product SKU
+    validation: nullable|string|max:100
+    
+  - name: description
+    label: Description
+    type: textarea
+    required: true
+    placeholder: Product description
+    validation: required|string
+    
+  - name: long_description
+    label: Long Description
+    type: wysiwyg
+    required: false
+    placeholder: Detailed product information
+    validation: nullable|string
+    
+  - name: main_image
+    label: Main Image
+    type: media
+    required: true
+    accept: image/*
+    validation: required|string
+    
+  - name: price
+    label: Price
+    type: number
+    required: true
+    placeholder: 0.00
+    step: 0.01
+    validation: required|numeric|min:0
+    
+  - name: sale_price
+    label: Sale Price
+    type: number
+    required: false
+    placeholder: 0.00
+    step: 0.01
+    validation: nullable|numeric|min:0
+    
+  - name: stock
+    label: Stock Quantity
+    type: number
+    required: false
+    placeholder: Available quantity
+    validation: nullable|integer|min:0
+    
+  - name: expires_at
+    label: Expiration Date
+    type: datetime
+    required: false
+    placeholder: Leave empty for no expiration (e.g., for limited offers)
+    validation: nullable|date
+    
+  - name: category
+    label: Category
+    type: category
+    required: false
+    validation: nullable|string
+    help: Select a product category
+    
+  - name: status
+    label: Status
+    type: select
+    required: true
+    default: draft
+    options:
+      draft: Draft
+      published: Published
+      out_of_stock: Out of Stock
+      discontinued: Discontinued
+    validation: required|in:draft,published,out_of_stock,discontinued

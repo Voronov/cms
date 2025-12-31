@@ -1,0 +1,72 @@
+name: Single Entity
+description: Display a single entity by ID or slug
+layout: default
+layouts:
+  - default
+  - card
+  - minimal
+  - hero
+  - sidebar
+preview:
+  template: |
+    <div class="p-4 bg-white dark:bg-gray-800 rounded border">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-semibold text-gray-900 dark:text-white">Single Entity</span>
+        <span class="text-xs text-gray-500">[[ entity_type || 'No type' ]]</span>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400">Entity ID: [[ entity_id || 'Not selected' ]]</p>
+      <div class="mt-2 text-xs text-gray-500">Layout: [[ layout || 'default' ]]</div>
+    </div>
+fields:
+  - name: entity_type
+    label: Entity Type
+    type: text
+    placeholder: Enter entity type (e.g., news, article, product)
+    validation: required|string
+    help: Enter the entity type name exactly as defined in your entities folder
+    
+  - name: entity_id
+    label: Select Entity
+    type: entity_item_select
+    placeholder: Select an entity
+    validation: nullable|integer
+    help: Select the specific entity to display
+    depends_on: entity_type
+    
+  - name: show_title
+    label: Show Title
+    type: checkbox
+    default: true
+    
+  - name: show_image
+    label: Show Featured Image
+    type: checkbox
+    default: true
+    
+  - name: show_content
+    label: Show Full Content
+    type: checkbox
+    default: true
+    
+  - name: show_meta
+    label: Show Metadata
+    type: checkbox
+    default: true
+    help: Display author, date, category, etc.
+    
+  - name: show_gallery
+    label: Show Gallery
+    type: checkbox
+    default: true
+    help: Display image gallery if available
+    
+  - name: template
+    label: Display Template
+    type: select
+    default: default
+    options:
+      default: Default
+      card: Card Style
+      featured: Featured Style
+      minimal: Minimal Style
+    validation: required|string

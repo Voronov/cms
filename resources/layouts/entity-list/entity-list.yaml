@@ -1,0 +1,96 @@
+name: Entity List
+description: Display a list of any entity type with pagination
+layout: default
+layouts:
+  - default
+  - compact
+  - featured
+  - grid
+  - masonry
+preview:
+  template: |
+    <div class="p-4 bg-white dark:bg-gray-800 rounded border">
+      <div class="flex items-center justify-between mb-2">
+        <span class="font-semibold text-gray-900 dark:text-white">[[ title || 'Entity List' ]]</span>
+        <span class="text-xs text-gray-500">[[ entity_type || 'No type selected' ]]</span>
+      </div>
+      <p class="text-sm text-gray-600 dark:text-gray-400">[[ description || 'No description' ]]</p>
+      <div class="mt-2 text-xs text-gray-500">
+        Layout: [[ layout || 'default' ]] | Category: [[ category || 'all' ]]
+      </div>
+    </div>
+fields:
+  - name: layout
+    label: Block Layout
+    type: select
+    default: default
+    options:
+      default: Default Layout
+      compact: Compact Layout
+      featured: Featured Layout
+      grid: Grid Layout
+      masonry: Masonry Layout
+    validation: required|string
+    help: Select the visual layout for this block
+    
+  - name: entity_type
+    label: Entity Type
+    type: entity_select
+    placeholder: Select entity type
+    validation: required|string
+    help: Select the entity type to display
+    
+  - name: title
+    label: Block Title
+    type: text
+    placeholder: Optional title for this section
+    validation: nullable|string|max:255
+    
+  - name: description
+    label: Block Description
+    type: textarea
+    placeholder: Optional description for this section
+    validation: nullable|string|max:500
+    help: Add a description to provide context for this entity list
+    
+  - name: category
+    label: Filter by Category
+    type: category_select
+    placeholder: Select category (optional)
+    validation: nullable|string
+    help: Filter entities by category. Categories are loaded from the selected entity type.
+    depends_on: entity_type
+    
+    
+  - name: order_by
+    label: Order By
+    type: select
+    default: created_at
+    options:
+      created_at: Newest First
+      published_at: Publication Date
+      title: Title (A-Z)
+    validation: required|string
+    
+  - name: show_excerpt
+    label: Show Excerpt
+    type: checkbox
+    default: true
+    help: Display excerpt/summary for each item
+    
+  - name: show_image
+    label: Show Featured Image
+    type: checkbox
+    default: true
+    help: Display featured image for each item
+    
+  - name: show_date
+    label: Show Date
+    type: checkbox
+    default: true
+    help: Display publication date
+    
+  - name: show_category
+    label: Show Category Badge
+    type: checkbox
+    default: true

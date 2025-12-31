@@ -1,0 +1,132 @@
+name: Article
+singular: Article
+plural: Articles
+icon: document
+description: Long-form articles and blog posts
+slug_field: title
+
+list_layout: grid
+list_columns: 3
+default_pagination: 9
+template_map:
+  grid: components.blocks.partials.entity-card
+  list: components.blocks.partials.entity-list-item
+  magazine: components.blocks.partials.entity-card
+
+detail_layout: article-detail
+
+categories:
+  - name: Technology
+    slug: technology
+    description: Tech articles and tutorials
+  - name: Business
+    slug: business
+    description: Business insights and strategies
+  - name: Lifestyle
+    slug: lifestyle
+    description: Lifestyle and personal development
+  - name: Travel
+    slug: travel
+    description: Travel guides and experiences
+  - name: Food
+    slug: food
+    description: Food and cooking articles
+  - name: Health & Wellness
+    slug: health-wellness
+    description: Health and wellness tips
+  - name: Education
+    slug: education
+    description: Educational content and learning
+  - name: Finance
+    slug: finance
+    description: Personal finance and investing
+  - name: Career
+    slug: career
+    description: Career development and advice
+  - name: Opinion
+    slug: opinion
+    description: Opinion pieces and editorials
+
+seo:
+  enabled: true
+  title_field: title
+  description_field: summary
+  image_field: cover_image
+
+fields:
+  - name: title
+    label: Title
+    type: text
+    required: true
+    placeholder: Enter article title
+    validation: required|string|max:255
+    
+  - name: slug
+    label: URL Slug
+    type: text
+    required: true
+    auto_generate: title
+    placeholder: auto-generated-from-title
+    validation: required|string|max:255|unique:entities,content->slug
+    
+  - name: summary
+    label: Summary
+    type: textarea
+    required: true
+    placeholder: Brief summary of the article
+    validation: required|string|max:500
+    
+  - name: content
+    label: Content
+    type: wysiwyg
+    required: true
+    placeholder: Write your article content here
+    validation: required|string
+    
+  - name: front_image
+    label: Front Image
+    type: file
+    required: false
+    accept: image/jpeg,image/png,image/webp,image/gif
+    max_size: 5120
+    validation: nullable|file|mimes:jpeg,png,webp,gif|max:5120
+    help: Main featured image for the article (max 5MB)
+    
+  - name: published_at
+    label: Publish Date
+    type: datetime
+    required: true
+    default: now
+    validation: required|date
+    
+  - name: expires_at
+    label: Expiration Date
+    type: datetime
+    required: false
+    placeholder: Leave empty for no expiration
+    validation: nullable|date|after:published_at
+    
+  - name: author
+    label: Author
+    type: text
+    required: true
+    placeholder: Author name
+    validation: required|string|max:255
+    
+  - name: reading_time
+    label: Reading Time (minutes)
+    type: number
+    required: false
+    placeholder: Estimated reading time
+    validation: nullable|integer|min:1
+    
+  - name: status
+    label: Status
+    type: select
+    required: true
+    default: draft
+    options:
+      draft: Draft
+      published: Published
+      archived: Archived
+    validation: required|in:draft,published,archived

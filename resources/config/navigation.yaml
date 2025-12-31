@@ -1,0 +1,47 @@
+navigation:
+  - name: Dashboard
+    route: admin.dashboard
+    icon: home
+    section: main
+    order: 1
+  - name: Pages
+    route: admin.pages.index
+    icon: document
+    section: content
+    order: 2
+  - name: Forms
+    route: admin.forms.index
+    icon: clipboard
+    section: content
+    order: 3
+  - name: Redirects
+    route: admin.redirects.index
+    icon: arrows
+    section: content
+    order: 4
+  - name: Users
+    route: admin.users
+    icon: users
+    section: system
+    order: 5
+  - name: System Logs
+    route: admin.logs.index
+    icon: server
+    section: system
+    order: 6
+  - name: Navigation
+    route: admin.navigation.index
+    icon: cog
+    section: system
+    order: 7
+
+sections:
+  main:
+    label: Main
+    order: 1
+  content:
+    label: Content Management
+    order: 2
+  system:
+    label: System
+    order: 3
