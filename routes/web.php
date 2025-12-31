@@ -75,6 +75,8 @@ Route::middleware(['auth', 'verified', 'approved', 'nocache'])->prefix('admin')-
     Route::resource('pages', PageController::class, ['as' => 'admin']);
     Route::post('/pages/{page}/blocks', [\App\Http\Controllers\PageBlockController::class, 'saveBlocks'])->name('admin.pages.blocks.save');
     Route::resource('redirects', \App\Http\Controllers\RedirectController::class, ['as' => 'admin'])->only(['index', 'store', 'destroy']);
+    Route::resource('menus', \App\Http\Controllers\MenuController::class, ['as' => 'admin']);
+    Route::post('/menus/{menu}/items', [\App\Http\Controllers\MenuController::class, 'saveItems'])->name('admin.menus.items.save');
     Route::resource('navigation', NavigationItemController::class, ['as' => 'admin'])->except(['show']);
 
     Route::get('/entities/{type}', [EntityController::class, 'index'])->name('admin.entities.index');

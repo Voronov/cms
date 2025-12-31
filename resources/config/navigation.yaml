@@ -14,11 +14,16 @@ navigation:
     icon: clipboard
     section: content
     order: 3
+  - name: Menus
+    route: admin.menus.index
+    icon: menu
+    section: content
+    order: 4
   - name: Redirects
     route: admin.redirects.index
     icon: arrows
     section: content
-    order: 4
+    order: 5
   - name: Users
     route: admin.users
     icon: users

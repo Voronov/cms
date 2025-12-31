@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\MenuService;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Symfony\Component\Yaml\Yaml;
@@ -23,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Blade::directive('menu', function ($expression) {
+            return "<?php echo app(\App\Services\MenuService::class)->render($expression); ?>";
+        });
+
         View::composer('layouts.admin', function ($view) {
             $navigationFile = resource_path('config/navigation.yaml');
             $navigationData = Yaml::parseFile($navigationFile);
