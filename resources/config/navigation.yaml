@@ -39,6 +39,12 @@ navigation:
     icon: cog
     section: system
     order: 7
+  - name: Cron Tasks
+    route: admin.crons.index
+    icon: clock
+    section: system
+    order: 8
+
 
 sections:
   main:

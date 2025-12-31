@@ -133,13 +133,6 @@ class PageController extends Controller
             'is_published' => $request->has('is_published'),
         ]);
 
-        SystemLog::create([
-            'level' => 'info',
-            'message' => 'Page created: ' . $request->title . ' (' . $locale . ')',
-            'context' => ['user_id' => auth()->id(), 'page_id' => $page->id],
-            'user_id' => auth()->id(),
-        ]);
-
         return redirect()->route('admin.pages.edit', ['page' => $page->id, 'locale' => $locale])->with('success', 'Page created successfully.');
     }
 
@@ -278,13 +271,6 @@ class PageController extends Controller
             ]);
         }
 
-        SystemLog::create([
-            'level' => 'info',
-            'message' => 'Page updated: ' . $request->title,
-            'context' => ['user_id' => auth()->id(), 'page_id' => $id],
-            'user_id' => auth()->id(),
-        ]);
-
         // Clear page cache
         Cache::flush();
 
@@ -298,13 +284,6 @@ class PageController extends Controller
     {
         $page = Page::findOrFail($id);
         $page->delete();
-
-        SystemLog::create([
-            'level' => 'warning',
-            'message' => 'Page deleted: ' . $page->title,
-            'context' => ['user_id' => auth()->id(), 'page_id' => $id],
-            'user_id' => auth()->id(),
-        ]);
 
         // Clear page cache
         Cache::flush();

@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Entity extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'type',
         'content',

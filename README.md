@@ -74,7 +74,8 @@ The site will be accessible at: [https://cms.ddev.site](https://cms.ddev.site)
 ## Project Structure
 
 - `resources/entities/`: YAML definitions for custom entities.
-- `app/Models/`: Core data models (Entity, Page, Form, etc.).
+- `resources/crons/`: YAML definitions for scheduled cron tasks.
+- `app/Models/`: Core data models (Entity, Page, Form, CronTask, etc.).
 - `public/js/`: Frontend editor logic (page-editor.js, repeater-field.js).
 - `resources/views/admin/`: Admin panel templates.
 
@@ -123,6 +124,36 @@ fields:
       draft: Draft
       published: Published
 ```
+
+## Cron Task YAML Structure
+
+Scheduled tasks can be defined using YAML files in `resources/crons/`. The system automatically syncs these definitions with the database and executes them via the `cron:run` Artisan command.
+
+### Configuration Options
+
+- `name`: Human-readable name for the task.
+- `description`: Brief explanation of what the task does.
+- `command`: The Artisan command to execute (e.g., `logger:test`).
+- `schedule`: Standard cron expression (e.g., `* * * * *`).
+- `enabled`: Boolean to enable or disable the task.
+
+### Example Cron Task (`sample_task.yaml`)
+
+```yaml
+name: Sample Cron Task
+description: A sample task that logs a message
+command: "logger:test"
+schedule: "* * * * *" # Every minute
+enabled: true
+```
+
+### Execution
+
+The main execution command is:
+```bash
+ddev artisan cron:run
+```
+This command is automatically scheduled to run every minute in `routes/console.php`.
 
 ## Global YAML Configurations
 

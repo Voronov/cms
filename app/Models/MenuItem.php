@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class MenuItem extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'menu_id',
         'parent_id',

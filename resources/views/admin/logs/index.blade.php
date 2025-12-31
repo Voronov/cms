@@ -8,10 +8,11 @@
             <thead class="bg-gray-50 dark:bg-gray-800">
                 <tr>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Level</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Message</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Changes</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Time</th>
-                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Context</th>
                 </tr>
             </thead>
             <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
@@ -28,17 +29,38 @@
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{ $log->level }}</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ $log->message }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ ucfirst($log->event) }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ $log->message }}
+                            @if($log->auditable_type)
+                                <div class="text-xs text-gray-400">{{ class_basename($log->auditable_type) }} #{{ $log->auditable_id }}</div>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
+                            @if($log->old_values || $log->new_values)
+                                <div class="space-y-2">
+                                    @if($log->old_values)
+                                        <div>
+                                            <span class="text-xs font-bold text-red-500 uppercase">Old:</span>
+                                            <pre class="text-xs bg-gray-50 dark:bg-gray-800 p-1 rounded overflow-x-auto max-w-xs">{{ json_encode($log->old_values, JSON_PRETTY_PRINT) }}</pre>
+                                        </div>
+                                    @endif
+                                    @if($log->new_values)
+                                        <div>
+                                            <span class="text-xs font-bold text-green-500 uppercase">New:</span>
+                                            <pre class="text-xs bg-gray-50 dark:bg-gray-800 p-1 rounded overflow-x-auto max-w-xs">{{ json_encode($log->new_values, JSON_PRETTY_PRINT) }}</pre>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                             {{ $log->user ? $log->user->email : 'System' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                             {{ $log->created_at->format('Y-m-d H:i:s') }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">
-                            @if($log->context)
-                                <pre class="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded">{{ json_encode($log->context, JSON_PRETTY_PRINT) }}</pre>
-                            @endif
                         </td>
                     </tr>
                 @endforeach

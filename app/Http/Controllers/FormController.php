@@ -36,13 +36,9 @@ class FormController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        $form->save();
+        $page->save();
 
-        SystemLog::create([
-            'level' => 'info',
-            'message' => 'Form created: ' . $form->title,
-            'user_id' => auth()->id(),
-        ]);
+        // Automatic logging handled by Auditable trait
 
         return redirect()->route('admin.forms.index')->with('success', 'Form created successfully.');
     }
@@ -77,11 +73,7 @@ class FormController extends Controller
 
         $form->save();
 
-        SystemLog::create([
-            'level' => 'info',
-            'message' => 'Form updated: ' . $form->title,
-            'user_id' => auth()->id(),
-        ]);
+        // Automatic logging handled by Auditable trait
 
         return redirect()->route('admin.forms.index')->with('success', 'Form updated successfully.');
     }
@@ -91,11 +83,7 @@ class FormController extends Controller
         $form = Form::find($identifier);
         if ($form) {
             $form->delete();
-            SystemLog::create([
-                'level' => 'info',
-                'message' => 'Form deleted: ' . $form->title,
-                'user_id' => auth()->id(),
-            ]);
+            // Automatic logging handled by Auditable trait
         }
 
         return redirect()->route('admin.forms.index')->with('success', 'Form deleted successfully.');

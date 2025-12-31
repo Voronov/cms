@@ -1,0 +1,5 @@
+name: Sample Cron Task
+description: A sample task that logs a message
+command: "logger:test"
+schedule: "* * * * *" # Every minute
+enabled: true

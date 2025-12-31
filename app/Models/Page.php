@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use App\Services\LanguageService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 class Page extends Model
 {
     /** @use HasFactory<\Database\Factories\PageFactory> */
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'title',
