@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Entity;
+use App\Models\PageTranslation;
+use App\Observers\EntityObserver;
+use App\Observers\PageTranslationObserver;
 use App\Services\MenuService;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Entity::observe(EntityObserver::class);
+        PageTranslation::observe(PageTranslationObserver::class);
+
         Blade::directive('menu', function ($expression) {
             return "<?php echo app(\App\Services\MenuService::class)->render($expression); ?>";
         });

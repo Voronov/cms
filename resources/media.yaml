@@ -15,11 +15,9 @@ allowed_extensions:
 
 image_processing:
   convert_to_webp: true
-  quality: 80
+  quality: 85
   max_width: 1920
-  responsive_variants:
-    - 640
-    - 1024
-    - 1280
-    - 1600
-    - 1920
+  variants:
+    lg: 1200
+    md: 800
+    sm: 300

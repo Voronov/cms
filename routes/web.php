@@ -101,6 +101,7 @@ Route::middleware(['auth', 'verified', 'approved', 'nocache'])->prefix('admin')-
 
     Route::post('/media/upload', [\App\Http\Controllers\MediaController::class, 'upload'])->name('admin.media.upload');
     Route::post('/media/crop', [\App\Http\Controllers\MediaController::class, 'crop'])->name('admin.media.crop');
+    Route::put('/media/{media}/rename', [\App\Http\Controllers\MediaController::class, 'rename'])->name('admin.media.rename');
     Route::get('/logs', [LogController::class, 'index'])->name('admin.logs.index');
     Route::resource('forms', FormController::class, ['as' => 'admin'])->parameters([
         'forms' => 'identifier'

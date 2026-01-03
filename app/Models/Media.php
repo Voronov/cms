@@ -9,13 +9,12 @@ use Illuminate\Support\Facades\Storage;
 class Media extends Model
 {
     protected $fillable = [
-        'filename',
+        'filepath',
         'original_name',
-        'path',
-        'mime_type',
-        'size',
+        'alt_text',
         'width',
         'height',
+        'filesize',
         'variants',
     ];
 
@@ -27,24 +26,30 @@ class Media extends Model
 
     public function getUrlAttribute()
     {
-        return Storage::url($this->path);
+        return Storage::disk('public')->url($this->filepath);
     }
 
     public function getUsage()
     {
         $usage = [];
-        
-        // Check Page Blocks
-        $pages = PageTranslation::where('blocks', 'LIKE', '%' . $this->path . '%')
-            ->orWhere('blocks', 'LIKE', '%' . $this->id . '%')
+
+        // Check relations table
+        $relations = \DB::table('media_relations')
+            ->where('media_id', $this->id)
             ->get();
 
-        foreach ($pages as $page) {
-            $usage[] = [
-                'type' => 'Page',
-                'name' => $page->title,
-                'url' => route('admin.pages.edit', ['page' => $page->page_id, 'locale' => $page->locale])
-            ];
+        foreach ($relations as $relation) {
+            $modelClass = $relation->mediable_type;
+            $model = $modelClass::find($relation->mediable_id);
+            
+            if ($model) {
+                $name = method_exists($model, 'getTitle') ? $model->getTitle() : ($model->title ?? $model->name ?? 'Related Item');
+                $usage[] = [
+                    'type' => class_basename($modelClass),
+                    'name' => $name,
+                    'field' => $relation->field_name,
+                ];
+            }
         }
 
         return $usage;

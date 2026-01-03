@@ -13,14 +13,13 @@ return new class extends Migration
     {
         Schema::create('media', function (Blueprint $table) {
             $table->id();
-            $table->string('filename');
+            $table->string('filepath'); // Stores relative base path (e.g., 2026/01/name.webp)
             $table->string('original_name');
-            $table->string('path');
-            $table->string('mime_type')->nullable();
-            $table->unsignedBigInteger('size')->nullable();
+            $table->string('alt_text')->nullable();
             $table->integer('width')->nullable();
             $table->integer('height')->nullable();
-            $table->json('variants')->nullable(); // For storing responsive variants or crop info
+            $table->integer('filesize')->nullable();
+            $table->json('variants')->nullable();
             $table->timestamps();
         });
     }

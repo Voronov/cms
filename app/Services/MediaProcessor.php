@@ -22,63 +22,84 @@ class MediaProcessor
     {
         $image = $this->manager->read($path);
         $image->crop($width, $height, $x, $y);
-        $image->save($path);
-
-        // Re-process to ensure WebP and scaling are applied to the cropped version
-        return $this->process($path);
-    }
-
-    public function process(string $path): string
-    {
+        
         $extension = pathinfo($path, PATHINFO_EXTENSION);
-        $isImage = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-
-        if (!$isImage) {
-            return $path;
-        }
-
-        // Generate responsive variants first if configured
-        $variants = $this->generateVariants($path);
-
-        if (!$this->config['image_processing']['convert_to_webp']) {
-            return $path;
-        }
-
-        $image = $this->manager->read($path);
-
-        // Optional Resize for original
-        $maxWidth = $this->config['image_processing']['max_width'] ?? 1920;
-        if ($image->width() > $maxWidth) {
-            $image->scale(width: $maxWidth);
-        }
-
         $webpPath = preg_replace('/\.[^.]+$/', '.webp', $path);
-        $image->toWebp($this->config['image_processing']['quality'] ?? 80)->save($webpPath);
+        
+        $image->toWebp($this->config['image_processing']['quality'] ?? 85)->save($webpPath);
 
-        // Delete original if it's not webp
-        if (strtolower($extension) !== 'webp') {
+        if (strtolower($extension) !== 'webp' && $webpPath !== $path) {
             File::delete($path);
         }
 
         return $webpPath;
     }
 
+    public function process(string $path, ?array $cropData = null): array
+    {
+        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $isImage = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'webp']);
+
+        if (!$isImage) {
+            return [
+                'path' => $path,
+                'variants' => []
+            ];
+        }
+
+        // Step A: Determine Source Master
+        if ($cropData) {
+            $path = $this->crop(
+                $path,
+                $cropData['x'],
+                $cropData['y'],
+                $cropData['width'],
+                $cropData['height']
+            );
+        }
+
+        $image = $this->manager->read($path);
+        
+        // Step B: Format Conversion (WebP)
+        $webpPath = preg_replace('/\.[^.]+$/', '.webp', $path);
+        $quality = $this->config['image_processing']['quality'] ?? 85;
+        
+        $image->toWebp($quality)->save($webpPath);
+        
+        if (strtolower($extension) !== 'webp' && $webpPath !== $path) {
+            File::delete($path);
+        }
+
+        // Step C: Variant Generation
+        $variants = $this->generateVariants($webpPath);
+
+        return [
+            'path' => $webpPath,
+            'variants' => $variants,
+            'width' => $image->width(),
+            'height' => $image->height(),
+            'filesize' => File::size($webpPath)
+        ];
+    }
+
     protected function generateVariants(string $path): array
     {
         $variants = [];
-        $widths = $this->config['image_processing']['responsive_variants'] ?? [];
-        $extension = pathinfo($path, PATHINFO_EXTENSION);
+        $variantConfigs = $this->config['image_processing']['variants'] ?? [];
         $basename = pathinfo($path, PATHINFO_FILENAME);
         $dirname = pathinfo($path, PATHINFO_DIRNAME);
+        $quality = $this->config['image_processing']['quality'] ?? 85;
 
-        foreach ($widths as $width) {
+        foreach ($variantConfigs as $suffix => $maxWidth) {
             $image = $this->manager->read($path);
-            if ($image->width() > $width) {
-                $image->scale(width: $width);
-                $variantName = "{$basename}_{$width}.webp";
+            
+            // Condition: Do not upscale
+            if ($image->width() > $maxWidth) {
+                $image->scale(width: $maxWidth);
+                $variantName = "{$basename}-{$suffix}.webp";
                 $variantPath = "{$dirname}/{$variantName}";
-                $image->toWebp($this->config['image_processing']['quality'] ?? 80)->save($variantPath);
-                $variants[$width] = $variantName;
+                $image->toWebp($quality)->save($variantPath);
+                $variants[] = $suffix;
             }
         }
 
