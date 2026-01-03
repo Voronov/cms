@@ -162,14 +162,16 @@ document.addEventListener('alpine:init', () => {
             if (slug) {
                 this.pendingSlug = slug;
                 this.showSlugModal = true;
-            } else {
-                alert('Please enter a title first.');
             }
         },
 
         applySlug() {
             document.getElementById('slug').value = this.pendingSlug;
             this.showSlugModal = false;
+        },
+
+        toggleSettings() {
+            this.showSettings = !this.showSettings;
         },
 
         addBlock(typeId) {

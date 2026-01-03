@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
+use App\Traits\HasRevisions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Traits\HasMedia;
 
 class Entity extends Model
 {
-    use Auditable, HasMedia;
+    use Auditable, HasMedia, SoftDeletes, HasRevisions;
 
     protected $fillable = [
         'type',

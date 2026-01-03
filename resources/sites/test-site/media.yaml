@@ -1,0 +1,23 @@
+# Media Settings
+# Sizes in Bytes
+
+max_file_size: 10485760 # 10MB
+chunk_size: 1048576 # 1MB
+
+allowed_extensions:
+  - jpg
+  - jpeg
+  - png
+  - gif
+  - webp
+  - svg
+  - pdf
+
+image_processing:
+  convert_to_webp: true
+  quality: 85
+  max_width: 1920
+  variants:
+    lg: 1200
+    md: 800
+    sm: 300

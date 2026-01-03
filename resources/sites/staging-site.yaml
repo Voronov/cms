@@ -1,0 +1,77 @@
+# Staging Site Configuration
+site_key: staging-site
+name: Staging Site
+
+# Domain configuration
+domains:
+  - https://staging.cms.local
+  - https://cms-staging.ddev.site
+
+# Primary domain (used for URL generation)
+primary_domain: https://staging.cms.local
+
+# Language configuration - English, Spanish, French, and Italian
+languages:
+  en:
+    name: English
+    native: English
+    default: true
+    mode: standalone
+  es:
+    name: Spanish
+    native: Español
+    default: false
+    mode: copy
+  fr:
+    name: French
+    native: Français
+    default: false
+    mode: copy
+  it:
+    name: Italian
+    native: Italiano
+    default: false
+    mode: standalone
+
+# Default language
+default_locale: en
+
+# Cache configuration - production-like settings
+cache:
+  enabled: true
+  ttl: 7200  # 2 hours
+  driver: file
+
+# Media configuration - production-like restrictions
+media:
+  max_upload_size: 8192  # 8MB in KB
+  allowed_types:
+    - image/jpeg
+    - image/png
+    - image/webp
+  image_sizes:
+    thumbnail:
+      width: 150
+      height: 150
+    medium:
+      width: 600
+      height: 400
+    large:
+      width: 1200
+      height: 800
+
+# SEO defaults
+seo:
+  default_title_suffix: " | Staging"
+  default_description: "Staging environment for testing"
+  og_image: /images/staging-og.jpg
+  robots_noindex: true  # Prevent search engines from indexing staging
+
+# Feature flags - production-like configuration
+features:
+  comments_enabled: true
+  search_enabled: true
+  newsletter_enabled: true
+  analytics_enabled: true
+  debug_mode: false
+  experimental_features: false

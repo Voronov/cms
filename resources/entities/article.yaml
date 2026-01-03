@@ -92,6 +92,28 @@ fields:
     validation: nullable|file|mimes:jpeg,png,webp,gif|max:5120
     help: Main featured image for the article (max 5MB)
     
+  - name: image_alt
+    label: Featured Image Alt Text
+    type: text
+    required: false
+    placeholder: Describe the featured image
+    validation: nullable|string|max:255
+    help: Important for SEO and accessibility.
+
+  - name: is_noindex
+    label: No Index
+    type: checkbox
+    required: false
+    help: If checked, search engines will not index this page.
+
+  - name: canonical_url
+    label: Canonical URL
+    type: text
+    required: false
+    placeholder: https://example.com/original-page
+    validation: nullable|url|max:255
+    help: Use this if the content is a copy of another page.
+
   - name: published_at
     label: Publish Date
     type: datetime
@@ -130,3 +152,12 @@ fields:
       published: Published
       archived: Archived
     validation: required|in:draft,published,archived
+
+  - name: social_image
+    label: Social Sharing Image
+    type: file
+    required: false
+    accept: image/jpeg,image/png,image/webp
+    max_size: 5120
+    validation: nullable|file|mimes:jpeg,png,webp|max:5120
+    help: Custom image for social media sharing (OG/Twitter). Fallbacks to Cover Image if empty.

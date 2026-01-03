@@ -11,7 +11,10 @@
                 {{-- Image on left --}}
                 <div class="image-container">
                     @if(!empty($block['image']))
-                        <img src="{{ $block['image'] }}" alt="{{ $block['title'] ?? '' }}" class="w-full h-auto rounded-lg shadow-lg">
+                        <img src="{{ $block['image'] }}" 
+                             alt="{{ $block['image_alt'] ?? $block['title'] ?? '' }}" 
+                             class="w-full h-auto rounded-lg shadow-lg"
+                             {{ ($isFirst ?? false) ? '' : 'loading=lazy' }}>
                     @endif
                 </div>
                 <div class="text-container prose dark:prose-invert">
@@ -30,7 +33,10 @@
                 </div>
                 <div class="image-container">
                     @if(!empty($block['image']))
-                        <img src="{{ $block['image'] }}" alt="{{ $block['title'] ?? '' }}" class="w-full h-auto rounded-lg shadow-lg">
+                        <img src="{{ $block['image'] }}" 
+                             alt="{{ $block['image_alt'] ?? $block['title'] ?? '' }}" 
+                             class="w-full h-auto rounded-lg shadow-lg"
+                             {{ ($isFirst ?? false) ? '' : 'loading=lazy' }}>
                     @endif
                 </div>
             @endif
@@ -43,7 +49,10 @@
             @if($align === 'left')
                 <div>
                     @if(!empty($block['image']))
-                        <img src="{{ $block['image'] }}" alt="{{ $block['title'] ?? '' }}" class="w-full h-auto rounded-lg shadow-lg">
+                        <img src="{{ $block['image'] }}" 
+                             alt="{{ $block['image_alt'] ?? $block['title'] ?? '' }}" 
+                             class="w-full h-auto rounded-lg shadow-lg"
+                             {{ ($isFirst ?? false) ? '' : 'loading=lazy' }}>
                     @endif
                 </div>
                 <div class="prose dark:prose-invert">
@@ -61,7 +70,10 @@
                 </div>
                 <div>
                     @if(!empty($block['image']))
-                        <img src="{{ $block['image'] }}" alt="{{ $block['title'] ?? '' }}" class="w-full h-auto rounded-lg shadow-lg">
+                        <img src="{{ $block['image'] }}" 
+                             alt="{{ $block['image_alt'] ?? $block['title'] ?? '' }}" 
+                             class="w-full h-auto rounded-lg shadow-lg"
+                             {{ ($isFirst ?? false) ? '' : 'loading=lazy' }}>
                     @endif
                 </div>
             @endif

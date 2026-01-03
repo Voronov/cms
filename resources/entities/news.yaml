@@ -1,3 +1,18 @@
+# ---------------------------------------------------------
+# SYSTEM INTEGRATION
+# ---------------------------------------------------------
+root_integration:
+  enabled: true
+  settings:
+    archive_page:
+      label: "News Archive Page"
+      description: "Select the page that displays the list of news."
+      required: true
+      key: "news_archive_id"
+
+# ---------------------------------------------------------
+# ENTITY CONFIGURATION
+# ---------------------------------------------------------
 name: News
 singular: News Item
 plural: News

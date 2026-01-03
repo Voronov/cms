@@ -49,6 +49,11 @@ navigation:
     icon: clock
     section: system
     order: 8
+  - name: Trash Bin
+    route: admin.trash.index
+    icon: trash
+    section: system
+    order: 9
 
 
 sections:

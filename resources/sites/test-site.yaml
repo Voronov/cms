@@ -1,0 +1,66 @@
+# Test Site Configuration
+site_key: test-site
+name: Test Site
+
+# Domain configuration
+domains:
+  - https://test.cms.local
+  - https://cms-test.ddev.site
+
+# Primary domain (used for URL generation)
+primary_domain: https://test.cms.local
+
+# Language configuration - English and Spanish
+languages:
+  en:
+    name: English
+    native: English
+    default: true
+    mode: standalone
+  es:
+    name: Spanish
+    native: Español
+    default: false
+    mode: copy
+
+# Default language
+default_locale: en
+
+# Cache configuration
+cache:
+  enabled: true
+  ttl: 3600
+  driver: file
+
+# Media configuration
+media:
+  max_upload_size: 10240  # 10MB in KB
+  allowed_types:
+    - image/jpeg
+    - image/png
+    - image/gif
+    - image/webp
+    - application/pdf
+  image_sizes:
+    thumbnail:
+      width: 150
+      height: 150
+    medium:
+      width: 600
+      height: 400
+    large:
+      width: 1200
+      height: 800
+
+# SEO defaults
+seo:
+  default_title_suffix: " | Test Site"
+  default_description: "Welcome to our Test Site"
+  og_image: /images/test-og.jpg
+
+# Feature flags
+features:
+  comments_enabled: true
+  search_enabled: true
+  newsletter_enabled: true
+  analytics_enabled: false

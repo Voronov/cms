@@ -319,13 +319,9 @@
         @endforeach
 
         <div class="flex justify-end space-x-3 mt-6">
-            <a href="{{ route('admin.entities.index', $type) }}" 
-               class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                Cancel
-            </a>
-            <button type="submit" 
-                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition">
-                Update {{ $singularName }}
+            <x-revision-manager :model="$entity" :modelType="get_class($entity)" />
+            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                Save Changes
             </button>
         </div>
     </form>

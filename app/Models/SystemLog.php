@@ -17,6 +17,7 @@ class SystemLog extends Model
         'old_values',
         'new_values',
         'user_id',
+        'ip_address',
         'auditable_type',
         'auditable_id',
     ];

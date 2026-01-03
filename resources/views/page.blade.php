@@ -4,6 +4,9 @@
 
 @section('meta')
     <meta name="description" content="{{ $translation->meta_description }}">
+    @if($translation->robots_noindex)
+        <meta name="robots" content="noindex, nofollow">
+    @endif
 
     <!-- Open Graph -->
     <meta property="og:title" content="{{ $translation->og_title ?? $translation->meta_title ?? $translation->title }}">

@@ -1,0 +1,78 @@
+# Development Site Configuration
+site_key: dev-site
+name: Development Site
+
+# Domain configuration
+domains:
+  - https://dev.cms.local
+  - https://cms-dev.ddev.site
+
+# Primary domain (used for URL generation)
+primary_domain: https://dev.cms.local
+
+# Language configuration - English, French, and German
+languages:
+  en:
+    name: English
+    native: English
+    default: true
+    mode: standalone
+  fr:
+    name: French
+    native: Français
+    default: false
+    mode: standalone
+  de:
+    name: German
+    native: Deutsch
+    default: false
+    mode: reference
+
+# Default language
+default_locale: en
+
+# Cache configuration - disabled for development
+cache:
+  enabled: false
+  ttl: 0
+  driver: file
+
+# Media configuration - more permissive for dev
+media:
+  max_upload_size: 20480  # 20MB in KB
+  allowed_types:
+    - image/jpeg
+    - image/png
+    - image/gif
+    - image/webp
+    - image/svg+xml
+    - application/pdf
+    - video/mp4
+  image_sizes:
+    thumbnail:
+      width: 200
+      height: 200
+    medium:
+      width: 800
+      height: 600
+    large:
+      width: 1600
+      height: 1200
+    xlarge:
+      width: 2400
+      height: 1800
+
+# SEO defaults
+seo:
+  default_title_suffix: " | Dev Site"
+  default_description: "Development environment"
+  og_image: /images/dev-og.jpg
+
+# Feature flags - all enabled for testing
+features:
+  comments_enabled: true
+  search_enabled: true
+  newsletter_enabled: true
+  analytics_enabled: true
+  debug_mode: true
+  experimental_features: true

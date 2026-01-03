@@ -52,6 +52,11 @@ class MediaController extends Controller
             Storage::disk('public')->delete($media->filepath);
         }
 
+        // Delete the original file
+        if ($media->original_filepath && Storage::disk('public')->exists($media->original_filepath)) {
+            Storage::disk('public')->delete($media->original_filepath);
+        }
+
         // Delete variants
         if ($media->variants) {
             $pathInfo = pathinfo($media->filepath);
@@ -77,12 +82,69 @@ class MediaController extends Controller
             'name' => 'required|string|max:255'
         ]);
 
-        $media->original_name = $request->input('name');
-        $media->save();
+        $newName = $request->input('name');
+        $newSlug = Str::slug(pathinfo($newName, PATHINFO_FILENAME));
+        $uploadDir = pathinfo($media->filepath, PATHINFO_DIRNAME);
+
+        // 1. Rename Main File
+        $oldFilepath = $media->filepath;
+        $extension = pathinfo($oldFilepath, PATHINFO_EXTENSION);
+        $newFilename = "{$newSlug}.{$extension}";
+        $newFilepath = "{$uploadDir}/{$newFilename}";
+
+        if ($oldFilepath !== $newFilepath) {
+            $counter = 1;
+            while (Storage::disk('public')->exists($newFilepath)) {
+                $newFilepath = "{$uploadDir}/{$newSlug}-{$counter}.{$extension}";
+                $counter++;
+            }
+            Storage::disk('public')->move($oldFilepath, $newFilepath);
+        }
+
+        // 2. Rename Original File
+        $oldOriginalFilepath = $media->original_filepath;
+        $newOriginalFilepath = $oldOriginalFilepath;
+        if ($oldOriginalFilepath) {
+            $origExtension = pathinfo($oldOriginalFilepath, PATHINFO_EXTENSION);
+            $newOrigFilename = "{$newSlug}-original.{$origExtension}";
+            $newOriginalFilepath = "{$uploadDir}/{$newOrigFilename}";
+
+            if ($oldOriginalFilepath !== $newOriginalFilepath) {
+                $counter = 1;
+                while (Storage::disk('public')->exists($newOriginalFilepath)) {
+                    $newOriginalFilepath = "{$uploadDir}/{$newSlug}-original-{$counter}.{$origExtension}";
+                    $counter++;
+                }
+                Storage::disk('public')->move($oldOriginalFilepath, $newOriginalFilepath);
+            }
+        }
+
+        // 3. Rename Variants
+        if ($media->variants) {
+            $oldBasename = pathinfo($oldFilepath, PATHINFO_FILENAME);
+            $newBasename = pathinfo($newFilepath, PATHINFO_FILENAME);
+
+            foreach ($media->variants as $suffix) {
+                $oldVariantPath = "{$uploadDir}/{$oldBasename}-{$suffix}.webp";
+                $newVariantPath = "{$uploadDir}/{$newBasename}-{$suffix}.webp";
+
+                if (Storage::disk('public')->exists($oldVariantPath)) {
+                    Storage::disk('public')->move($oldVariantPath, $newVariantPath);
+                }
+            }
+        }
+
+        $media->update([
+            'original_name' => $newName,
+            'filepath' => $newFilepath,
+            'original_filepath' => $newOriginalFilepath,
+            'alt_text' => $newSlug, // Update alt text to match new slug
+        ]);
 
         return response()->json([
             'success' => true,
-            'original_name' => $media->original_name
+            'original_name' => $media->original_name,
+            'filepath' => $media->filepath,
         ]);
     }
 
@@ -116,6 +178,17 @@ class MediaController extends Controller
 
         $finalPath = "{$uploadDir}/{$finalName}";
 
+        // Save original file
+        $originalExt = $file->getClientOriginalExtension();
+        $originalFileName = "{$slug}-original.{$originalExt}";
+        $counter = 1;
+        while (Storage::disk('public')->exists("{$uploadDir}/{$originalFileName}")) {
+            $originalFileName = "{$slug}-original-{$counter}.{$originalExt}";
+            $counter++;
+        }
+        $originalPath = "{$uploadDir}/{$originalFileName}";
+        Storage::disk('public')->put($originalPath, File::get($file->getRealPath()));
+
         // Temporary storage for processing
         $tempPath = $file->store('temp', 'local');
         $fullTempPath = storage_path("app/{$tempPath}");
@@ -136,6 +209,7 @@ class MediaController extends Controller
         // Create Media record
         $media = Media::create([
             'filepath' => $finalPath,
+            'original_filepath' => $originalPath,
             'original_name' => $originalName,
             'alt_text' => $slug,
             'width' => $result['width'],

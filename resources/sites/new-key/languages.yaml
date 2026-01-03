@@ -1,0 +1,11 @@
+default_locale: en
+languages:
+  en:
+    name: English
+    mode: independent
+  es:
+    name: Español
+    mode: copy
+  de:
+    name: Deutsch
+    mode: independent

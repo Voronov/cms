@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\View;
 use Symfony\Component\Yaml\Yaml;
 use App\Models\NavigationItem;
 use App\Services\EntityDefinitionService;
+use App\Services\SchemaService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(SchemaService::class, function ($app) {
+            return new SchemaService();
+        });
     }
 
     /**
@@ -32,8 +35,16 @@ class AppServiceProvider extends ServiceProvider
         Entity::observe(EntityObserver::class);
         PageTranslation::observe(PageTranslationObserver::class);
 
+        Blade::directive('schema', function ($expression) {
+            return "<?php echo app(\App\Services\SchemaService::class)->generate($expression); ?>";
+        });
+
         Blade::directive('menu', function ($expression) {
             return "<?php echo app(\App\Services\MenuService::class)->render($expression); ?>";
+        });
+
+        Blade::directive('breadcrumbs', function ($expression) {
+            return "<?php echo app(\App\Services\SchemaService::class)->renderBreadcrumbs($expression); ?>";
         });
 
         View::composer('layouts.admin', function ($view) {

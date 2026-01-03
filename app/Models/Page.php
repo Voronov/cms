@@ -3,19 +3,29 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
+use App\Traits\HasRevisions;
 use App\Services\LanguageService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Page extends Model
 {
     /** @use HasFactory<\Database\Factories\PageFactory> */
-    use HasFactory, Auditable;
+    use HasFactory, Auditable, SoftDeletes, HasRevisions;
+
+    const PAGE_TYPE_ROOT = 'root';
+    const PAGE_TYPE_REGULAR = 'regular';
+    const PAGE_TYPE_ENTITY_ARCHIVE = 'entity_archive';
+    const PAGE_TYPE_404 = '404';
 
     protected $fillable = [
         'title',
         'slug',
         'is_root',
+        'site_key',
+        'page_type',
+        'order',
         'layout',
         'content',
         'meta_title',
@@ -29,6 +39,8 @@ class Page extends Model
         'sitemap_priority',
         'sitemap_changefreq',
         'blocks',
+        'robots_noindex',
+        'system_config',
     ];
 
     protected $casts = [
@@ -37,6 +49,8 @@ class Page extends Model
         'sitemap_include' => 'boolean',
         'sitemap_priority' => 'float',
         'blocks' => 'array',
+        'robots_noindex' => 'boolean',
+        'system_config' => 'array',
     ];
 
     public function parent()
@@ -57,7 +71,63 @@ class Page extends Model
 
     public function children()
     {
-        return $this->hasMany(Page::class, 'parent_id');
+        return $this->hasMany(Page::class, 'parent_id')->orderBy('order');
+    }
+
+    public static function getPageTypes(): array
+    {
+        return [
+            self::PAGE_TYPE_ROOT => [
+                'label' => 'Root/Home Page',
+                'description' => 'Main homepage for a site. Each root page can have its own domain.',
+                'icon' => 'home',
+                'color' => 'blue'
+            ],
+            self::PAGE_TYPE_REGULAR => [
+                'label' => 'Regular Page',
+                'description' => 'Standard content page that can be nested in the page tree.',
+                'icon' => 'document',
+                'color' => 'gray'
+            ],
+            self::PAGE_TYPE_ENTITY_ARCHIVE => [
+                'label' => 'Entity Archive Page',
+                'description' => 'Archive page for displaying entity listings (News, Products, etc.).',
+                'icon' => 'collection',
+                'color' => 'purple'
+            ],
+            self::PAGE_TYPE_404 => [
+                'label' => '404 Error Page',
+                'description' => 'Custom 404 error page. Not included in sitemap.',
+                'icon' => 'exclamation',
+                'color' => 'red'
+            ],
+        ];
+    }
+
+    public function getPageTypeInfo(): array
+    {
+        $types = self::getPageTypes();
+        return $types[$this->page_type] ?? $types[self::PAGE_TYPE_REGULAR];
+    }
+
+    public function isAncestorOf($pageId): bool
+    {
+        $page = is_numeric($pageId) ? Page::find($pageId) : $pageId;
+        
+        if (!$page) {
+            return false;
+        }
+
+        $parent = $page->parent;
+        
+        while ($parent) {
+            if ($parent->id === $this->id) {
+                return true;
+            }
+            $parent = $parent->parent;
+        }
+        
+        return false;
     }
 
     public function redirects()
@@ -96,14 +166,50 @@ class Page extends Model
         $locale = $locale ?? app()->getLocale();
         $path = $this->getFullPath($locale);
 
-        $languageService = app(LanguageService::class);
-        $defaultLocale = $languageService->getDefaultLocale();
-
-        if ($locale !== $defaultLocale) {
-            return url('/' . $locale . rtrim($path, '/'));
+        // Get the root page for this page
+        $rootPage = $this->is_root ? $this : $this->getRootPage();
+        
+        // Check if there's a configured domain from YAML for this site
+        $domain = null;
+        if ($rootPage && $rootPage->site_key) {
+            $resourceService = new \App\Services\SiteResourceService();
+            $resourceService->setSiteKey($rootPage->site_key);
+            $domain = $resourceService->getPrimaryDomain();
+            
+            // Get default locale from site config
+            $defaultLocale = $resourceService->getDefaultLocale();
+        } else {
+            $languageService = app(LanguageService::class);
+            $defaultLocale = $languageService->getDefaultLocale();
         }
 
-        return url($path);
+        // Build the full URL
+        if ($locale !== $defaultLocale) {
+            $fullPath = '/' . $locale . rtrim($path, '/');
+        } else {
+            $fullPath = $path;
+        }
+
+        // Use configured domain if available, otherwise use default url() helper
+        if ($domain) {
+            return rtrim($domain, '/') . $fullPath;
+        }
+
+        return url($fullPath);
+    }
+
+    public function getRootPage(): ?Page
+    {
+        $current = $this;
+        
+        while ($current->parent) {
+            $current = $current->parent;
+            if ($current->is_root) {
+                return $current;
+            }
+        }
+        
+        return $current->is_root ? $current : null;
     }
 
     /**

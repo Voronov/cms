@@ -49,14 +49,14 @@ trait Auditable
         SystemLog::create([
             'level' => 'info',
             'event' => $event,
-            'message' => ucfirst(class_basename($this)) . " {$event}: " . ($this->title ?? $this->name ?? $this->id),
+            'message' => "User '" . (Auth::user()->name ?? 'System') . "' {$event} " . strtolower(class_basename($this)) . " '" . ($this->title ?? $this->name ?? $this->id) . "'",
             'user_id' => Auth::id(),
+            'ip_address' => request()->ip(),
             'auditable_type' => get_class($this),
             'auditable_id' => $this->id,
             'old_values' => $oldValues,
             'new_values' => $newValues,
             'context' => [
-                'ip' => request()->ip(),
                 'user_agent' => request()->userAgent(),
             ],
         ]);

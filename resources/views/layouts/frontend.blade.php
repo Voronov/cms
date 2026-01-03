@@ -6,7 +6,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', config('app.name', 'Laravel'))</title>
 
-    @yield('meta')
+    @if(isset($entity))
+        @php
+            $seoTitle = $entity->seo['title'] ?? $entity->content['title'] ?? $entity->content['name'] ?? config('app.name');
+            $seoDescription = $entity->seo['description'] ?? $entity->content['summary'] ?? $entity->content['excerpt'] ?? '';
+            $seoImage = $entity->seo['social_image'] ?? $entity->seo['image'] ?? $entity->content['cover_image'] ?? $entity->content['featured_image'] ?? null;
+            if ($seoImage && !filter_var($seoImage, FILTER_VALIDATE_URL)) {
+                $seoImage = url($seoImage);
+            }
+            $isNoIndex = $entity->seo['is_noindex'] ?? false;
+            $canonicalUrl = $entity->seo['canonical_url'] ?? null;
+        @endphp
+
+        @if($isNoIndex)
+            <meta name="robots" content="noindex">
+        @endif
+
+        @if($canonicalUrl)
+            <link rel="canonical" href="{{ $canonicalUrl }}" />
+        @else
+            <link rel="canonical" href="{{ url()->current() }}" />
+        @endif
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:title" content="{{ $seoTitle }}">
+        <meta property="og:description" content="{{ $seoDescription }}">
+        @if($seoImage)
+            <meta property="og:image" content="{{ $seoImage }}">
+        @endif
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="{{ url()->current() }}">
+        <meta property="twitter:title" content="{{ $seoTitle }}">
+        <meta property="twitter:description" content="{{ $seoDescription }}">
+        @if($seoImage)
+            <meta property="twitter:image" content="{{ $seoImage }}">
+        @endif
+    @endif
+
+    @stack('schema')
 
     <!-- Styles / Scripts -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>

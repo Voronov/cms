@@ -39,8 +39,11 @@
             document.addEventListener('DOMContentLoaded', function () {
                 // Function to init sortable on all nested lists
                 function initSortable(el) {
+                    // Get the site ID from the tree element
+                    var siteId = el.getAttribute('data-site-id');
+                    
                     new Sortable(el, {
-                        group: 'nested', // allow dragging between lists
+                        group: siteId ? 'site-' + siteId : 'nested', // Site-specific groups to prevent cross-site dragging
                         animation: 150,
                         fallbackOnBody: true,
                         swapThreshold: 0.65,
@@ -64,9 +67,14 @@
                                 body: JSON.stringify(payload)
                             }).then(response => {
                                 if (!response.ok) {
-                                    alert('Failed to move page');
-                                    location.reload();
+                                    return response.json().then(data => {
+                                        alert(data.error || 'Failed to move page');
+                                        location.reload();
+                                    });
                                 }
+                            }).catch(error => {
+                                alert('Failed to move page');
+                                location.reload();
                             });
                         }
                     });

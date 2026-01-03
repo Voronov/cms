@@ -74,6 +74,14 @@ Route::middleware(['auth', 'verified', 'approved', 'nocache'])->prefix('admin')-
 
     Route::resource('pages', PageController::class, ['as' => 'admin']);
     Route::post('/pages/{page}/blocks', [\App\Http\Controllers\PageBlockController::class, 'saveBlocks'])->name('admin.pages.blocks.save');
+    Route::patch('/pages/{page}/move', [PageController::class, 'move'])->name('admin.pages.move');
+    
+    Route::get('/cache', [\App\Http\Controllers\CacheController::class, 'index'])->name('admin.cache.index');
+    Route::post('/cache/clear', [\App\Http\Controllers\CacheController::class, 'clear'])->name('admin.cache.clear');
+    
+    Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('admin.settings.index');
+    Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('admin.settings.update');
+    
     Route::resource('redirects', \App\Http\Controllers\RedirectController::class, ['as' => 'admin'])->only(['index', 'store', 'destroy']);
     Route::resource('menus', \App\Http\Controllers\MenuController::class, ['as' => 'admin']);
     Route::post('/menus/{menu}/items', [\App\Http\Controllers\MenuController::class, 'saveItems'])->name('admin.menus.items.save');
@@ -103,6 +111,15 @@ Route::middleware(['auth', 'verified', 'approved', 'nocache'])->prefix('admin')-
     Route::post('/media/crop', [\App\Http\Controllers\MediaController::class, 'crop'])->name('admin.media.crop');
     Route::put('/media/{media}/rename', [\App\Http\Controllers\MediaController::class, 'rename'])->name('admin.media.rename');
     Route::get('/logs', [LogController::class, 'index'])->name('admin.logs.index');
+
+    // Trash & Revisions
+    Route::get('/trash', [\App\Http\Controllers\TrashController::class, 'index'])->name('admin.trash.index');
+    Route::post('/trash/{type}/{id}/restore', [\App\Http\Controllers\TrashController::class, 'restore'])->name('admin.trash.restore');
+    Route::delete('/trash/{type}/{id}/force', [\App\Http\Controllers\TrashController::class, 'forceDelete'])->name('admin.trash.force-delete');
+    Route::post('/trash/empty', [\App\Http\Controllers\TrashController::class, 'emptyTrash'])->name('admin.trash.empty');
+    Route::post('/revisions/{revision}/rollback', [\App\Http\Controllers\RevisionController::class, 'rollback'])->name('admin.revisions.rollback');
+    Route::get('/revisions/list', [\App\Http\Controllers\RevisionController::class, 'index'])->name('admin.revisions.index');
+
     Route::resource('forms', FormController::class, ['as' => 'admin'])->parameters([
         'forms' => 'identifier'
     ]);

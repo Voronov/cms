@@ -1,0 +1,37 @@
+pages:
+  enabled: true
+  ttl: 300  # Time to live in seconds (5 minutes)
+  tags:
+    - pages
+  
+blocks:
+  enabled: true
+  ttl: 600  # 10 minutes
+  tags:
+    - blocks
+    
+entities:
+  enabled: true
+  ttl: 300  # 5 minutes
+  tags:
+    - entities
+    
+partials:
+  enabled: true
+  ttl: 600  # 10 minutes for entity cards/list items
+  tags:
+    - partials
+
+# Cache driver: file, redis, memcached, database, array
+# Note: file and database drivers do not support tagging
+# Use redis or memcached for tag support in production
+driver: file
+
+# Clear cache on events
+clear_on:
+  - page_updated
+  - page_created
+  - page_deleted
+  - entity_updated
+  - entity_created
+  - entity_deleted

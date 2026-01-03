@@ -214,6 +214,18 @@ class EntityDefinitionService
             $seo['image'] = $content[$imageField];
         }
 
+        if (isset($content['social_image'])) {
+            $seo['social_image'] = $content['social_image'];
+        }
+
+        if (isset($content['is_noindex'])) {
+            $seo['is_noindex'] = (bool)$content['is_noindex'];
+        }
+
+        if (isset($content['canonical_url'])) {
+            $seo['canonical_url'] = $content['canonical_url'];
+        }
+
         return $seo;
     }
 
@@ -298,5 +310,38 @@ class EntityDefinitionService
         unset($this->definitions[$type]);
         
         return true;
+    }
+
+    public function getRootIntegration(string $type): ?array
+    {
+        return $this->definitions[$type]['root_integration'] ?? null;
+    }
+
+    public function hasRootIntegration(string $type): bool
+    {
+        $integration = $this->getRootIntegration($type);
+        return $integration && ($integration['enabled'] ?? false);
+    }
+
+    public function getRootIntegrationSettings(string $type): array
+    {
+        $integration = $this->getRootIntegration($type);
+        return $integration['settings'] ?? [];
+    }
+
+    public function getAllWithRootIntegration(): array
+    {
+        $entitiesWithIntegration = [];
+        
+        foreach ($this->definitions as $type => $definition) {
+            if ($this->hasRootIntegration($type)) {
+                $entitiesWithIntegration[$type] = [
+                    'name' => $this->getName($type),
+                    'settings' => $this->getRootIntegrationSettings($type)
+                ];
+            }
+        }
+        
+        return $entitiesWithIntegration;
     }
 }

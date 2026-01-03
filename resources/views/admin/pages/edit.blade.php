@@ -24,6 +24,18 @@
                     {{ $translation->title ?? 'Untitled' }}
                     <span class="text-sm font-normal text-gray-500">({{ strtoupper($currentLocale) }})</span>
                 </h1>
+                @if($page->is_root)
+                    <a href="{{ route('admin.settings.index', ['site_id' => $page->id]) }}"
+                        class="inline-flex items-center px-3 py-1.5 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-900 dark:text-blue-100 dark:hover:bg-blue-800 dark:border-blue-700">
+                        <svg class="-ml-1 mr-2 h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Site Settings
+                    </a>
+                @endif
                 <button type="button" @click="showSettings = !showSettings"
                     class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
                     <svg class="-ml-1 mr-2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -45,18 +57,20 @@
                     </svg>
                     Open
                 </a>
+                <x-revision-manager :model="$page" :modelType="get_class($page)" />
             </div>
 
-            <!-- Delete Form -->
-            <form action="{{ route('admin.pages.destroy', $page->id) }}" method="POST"
-                onsubmit="return confirm('Are you sure you want to delete this page?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit"
-                    class="text-red-600 hover:text-red-900 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1 rounded text-sm transition">
-                    Delete Page
-                </button>
-            </form>
+            <div class="flex items-center space-x-2">
+                <form action="{{ route('admin.pages.destroy', $page->id) }}" method="POST"
+                    onsubmit="return confirm('Are you sure you want to delete this page?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                        class="text-red-600 hover:text-red-900 border border-red-200 bg-red-50 hover:bg-red-100 px-3 py-1 rounded text-sm transition">
+                        Delete Page
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- Language Switcher Tabs -->
@@ -224,14 +238,29 @@
 
                             <div class="flex items-start">
                                 <div class="flex items-center h-5">
-                                    <input id="is_root" name="is_root" type="checkbox" {{ $page->is_root ? 'checked' : '' }}
+                                    <input id="robots_noindex" name="robots_noindex" type="checkbox" {{ $translation->robots_noindex ? 'checked' : '' }}
                                         class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
                                 </div>
                                 <div class="ml-3 text-sm">
-                                    <label for="is_root" class="font-medium text-gray-700 dark:text-gray-300">Root Page</label>
+                                    <label for="robots_noindex" class="font-medium text-gray-700 dark:text-gray-300">Hide from search engines</label>
+                                    <p class="text-gray-500 dark:text-gray-400">Adds noindex tag.</p>
+                                </div>
+                            </div>
+
+                            @if($page->is_root || !$hasRootPage)
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="is_root" name="is_root" type="checkbox" value="1"
+                                        {{ $page->is_root ? 'checked' : '' }}
+                                        class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="is_root" class="font-medium text-gray-700 dark:text-gray-300">Root
+                                        Page</label>
                                     <p class="text-gray-500 dark:text-gray-400">Set as Homepage.</p>
                                 </div>
                             </div>
+                            @endif
                         </div>
                     </div>
 

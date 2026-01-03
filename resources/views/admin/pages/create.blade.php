@@ -92,20 +92,79 @@
                         <p class="mt-1 text-xs text-gray-500">Leave blank to auto-generate.</p>
                     </div>
 
-                    <!-- Parent -->
+                    <!-- Page Type Selection -->
                     <div class="sm:col-span-6">
-                        <label for="parent_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Parent
-                            Page</label>
-                        <div class="mt-1">
-                            <select name="parent_id" id="parent_id"
-                                class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                                <option value="">None (Top Level)</option>
-                                @foreach($parents as $parent)
-                                    <option value="{{ $parent->id }}" {{ (isset($selectedParentId) && $selectedParentId == $parent->id) ? 'selected' : '' }}>
-                                        {{ $parent->title }}
-                                    </option>
-                                @endforeach
-                            </select>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Page Type</label>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            @foreach(\App\Models\Page::getPageTypes() as $type => $info)
+                                <div class="relative">
+                                    <input type="radio" name="page_type" id="page_type_{{ $type }}" value="{{ $type }}" 
+                                           {{ $type === 'regular' ? 'checked' : '' }}
+                                           class="peer sr-only">
+                                    <label for="page_type_{{ $type }}" 
+                                           class="flex flex-col p-4 bg-white dark:bg-gray-700 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 peer-checked:border-{{ $info['color'] }}-500 peer-checked:ring-2 peer-checked:ring-{{ $info['color'] }}-500 transition">
+                                        <div class="flex items-center mb-2">
+                                            <svg class="w-5 h-5 text-{{ $info['color'] }}-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                @if($info['icon'] === 'home')
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                                @elseif($info['icon'] === 'document')
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                @else
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                                @endif
+                                            </svg>
+                                            <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ $info['label'] }}</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $info['description'] }}</p>
+                                        @if($type === 'root')
+                                            <span class="mt-2 text-xs text-blue-600 dark:text-blue-400">Each root page can have its own domain</span>
+                                        @endif
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Parent - Drag and Drop -->
+                    <div class="sm:col-span-6">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Parent Page</label>
+                        <div class="bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-4">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                                Drag the <span class="font-semibold text-indigo-600">New Page</span> placeholder to position it in the tree hierarchy
+                            </p>
+                            
+                            <input type="hidden" name="parent_id" id="parent_id" value="{{ $selectedParentId ?? '' }}">
+                            
+                            <div id="tree-drop-zone" class="max-h-64 overflow-y-auto bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-3">
+                                <!-- New Page Placeholder (draggable) -->
+                                <div id="new-page-placeholder" class="mb-2 p-2 bg-indigo-50 dark:bg-indigo-900/30 border-2 border-dashed border-indigo-400 rounded cursor-move" draggable="true">
+                                    <div class="flex items-center text-indigo-700 dark:text-indigo-300">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                        </svg>
+                                        <span class="font-semibold text-sm">New Page</span>
+                                        <span class="ml-2 text-xs opacity-75">(Drag to position)</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tree Structure -->
+                                @if(isset($tree) && $tree->count() > 0)
+                                    @include('admin.pages.tree-drop', ['pages' => $tree, 'level' => 0])
+                                @else
+                                    <p class="text-sm text-gray-500 italic">No pages found. This will be a top-level page.</p>
+                                @endif
+                            </div>
+                            
+                            <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span class="font-medium">Current parent:</span> 
+                                <span id="parent-display">
+                                    @if(isset($selectedParentId) && $selectedParentId)
+                                        {{ $parents->firstWhere('id', $selectedParentId)?->title ?? 'None (Top Level)' }}
+                                    @else
+                                        None (Top Level)
+                                    @endif
+                                </span>
+                            </div>
                         </div>
                     </div>
 
@@ -184,6 +243,19 @@
                                     <p class="text-gray-500 dark:text-gray-400">Make visible.</p>
                                 </div>
                             </div>
+
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input id="robots_noindex" name="robots_noindex" type="checkbox"
+                                        class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label for="robots_noindex"
+                                        class="font-medium text-gray-700 dark:text-gray-300">Hide from search engines</label>
+                                    <p class="text-gray-500 dark:text-gray-400">Adds noindex tag.</p>
+                                </div>
+                            </div>
+                            @if(!$hasRootPage)
                             <div class="flex items-start">
                                 <div class="flex items-center h-5">
                                     <input id="is_root" name="is_root" type="checkbox"
@@ -195,6 +267,7 @@
                                     <p class="text-gray-500 dark:text-gray-400">Set as Homepage.</p>
                                 </div>
                             </div>
+                            @endif
                         </div>
                     </div>
 
@@ -459,6 +532,138 @@
                         .trim();
                     document.getElementById('slug').placeholder = slug || 'custom-slug';
                 }
+            });
+
+            // Drag and Drop for Parent Selection
+            document.addEventListener('DOMContentLoaded', function() {
+                const placeholder = document.getElementById('new-page-placeholder');
+                const dropZone = document.getElementById('tree-drop-zone');
+                const parentInput = document.getElementById('parent_id');
+                const parentDisplay = document.getElementById('parent-display');
+                let draggedElement = null;
+
+                // Tree toggle functionality
+                document.querySelectorAll('.tree-toggle-drop').forEach(function(btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        this.classList.toggle('rotate-0');
+                        this.classList.toggle('-rotate-90');
+                        
+                        const li = this.closest('li');
+                        const subtree = li.querySelector('.subtree-drop');
+                        
+                        if (subtree) {
+                            subtree.style.display = subtree.style.display === 'none' ? 'block' : 'none';
+                        }
+                    });
+                });
+
+                // Drag start
+                placeholder.addEventListener('dragstart', function(e) {
+                    draggedElement = this;
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/html', this.innerHTML);
+                    this.style.opacity = '0.4';
+                });
+
+                placeholder.addEventListener('dragend', function(e) {
+                    this.style.opacity = '1';
+                    
+                    // Remove all drag-over classes
+                    document.querySelectorAll('.drop-target').forEach(function(target) {
+                        target.classList.remove('bg-indigo-100', 'dark:bg-indigo-900/50');
+                    });
+                });
+
+                // Drop targets
+                const dropTargets = document.querySelectorAll('.drop-target');
+                
+                dropTargets.forEach(function(target) {
+                    target.addEventListener('dragover', function(e) {
+                        if (e.preventDefault) {
+                            e.preventDefault();
+                        }
+                        e.dataTransfer.dropEffect = 'move';
+                        
+                        this.classList.add('bg-indigo-100', 'dark:bg-indigo-900/50');
+                        return false;
+                    });
+
+                    target.addEventListener('dragenter', function(e) {
+                        this.classList.add('bg-indigo-100', 'dark:bg-indigo-900/50');
+                    });
+
+                    target.addEventListener('dragleave', function(e) {
+                        this.classList.remove('bg-indigo-100', 'dark:bg-indigo-900/50');
+                    });
+
+                    target.addEventListener('drop', function(e) {
+                        if (e.stopPropagation) {
+                            e.stopPropagation();
+                        }
+
+                        this.classList.remove('bg-indigo-100', 'dark:bg-indigo-900/50');
+
+                        const pageId = this.getAttribute('data-page-id');
+                        const pageTitle = this.getAttribute('data-page-title');
+                        
+                        // Update hidden input
+                        parentInput.value = pageId;
+                        
+                        // Update display
+                        parentDisplay.textContent = pageTitle;
+                        
+                        // Move placeholder visually
+                        const subtree = this.querySelector('.subtree-drop');
+                        if (subtree) {
+                            // Expand the subtree if collapsed
+                            subtree.style.display = 'block';
+                            const toggle = this.querySelector('.tree-toggle-drop');
+                            if (toggle) {
+                                toggle.classList.remove('-rotate-90');
+                            }
+                            // Insert at the beginning of subtree
+                            const ul = subtree.querySelector('ul');
+                            if (ul) {
+                                ul.insertBefore(placeholder, ul.firstChild);
+                            }
+                        } else {
+                            // No children, insert after this item
+                            this.appendChild(placeholder);
+                        }
+
+                        return false;
+                    });
+                });
+
+                // Drop on the main drop zone (for top-level)
+                dropZone.addEventListener('dragover', function(e) {
+                    if (e.preventDefault) {
+                        e.preventDefault();
+                    }
+                    e.dataTransfer.dropEffect = 'move';
+                    return false;
+                });
+
+                dropZone.addEventListener('drop', function(e) {
+                    if (e.stopPropagation) {
+                        e.stopPropagation();
+                    }
+
+                    // Check if dropped directly on the zone (not on a target)
+                    if (e.target === dropZone || e.target.tagName === 'UL') {
+                        // Set as top-level
+                        parentInput.value = '';
+                        parentDisplay.textContent = 'None (Top Level)';
+                        
+                        // Move placeholder to top
+                        dropZone.insertBefore(placeholder, dropZone.firstChild);
+                    }
+
+                    return false;
+                });
             });
         </script>
     @endpush

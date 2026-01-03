@@ -10,6 +10,7 @@ class Media extends Model
 {
     protected $fillable = [
         'filepath',
+        'original_filepath',
         'original_name',
         'alt_text',
         'width',

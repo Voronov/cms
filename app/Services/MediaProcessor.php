@@ -20,6 +20,15 @@ class MediaProcessor
 
     public function crop(string $path, int $x, int $y, int $width, int $height): string
     {
+        if (!File::exists($path)) {
+            throw new \Exception("File does not exist: {$path}");
+        }
+
+        $mime = File::mimeType($path);
+        if (!str_starts_with($mime, 'image/')) {
+            throw new \Exception("File is not a valid image: {$path} (MIME: {$mime})");
+        }
+
         $image = $this->manager->read($path);
         $image->crop($width, $height, $x, $y);
         
@@ -37,10 +46,23 @@ class MediaProcessor
 
     public function process(string $path, ?array $cropData = null): array
     {
+        if (!File::exists($path)) {
+            throw new \Exception("File does not exist: {$path}");
+        }
+
         $extension = pathinfo($path, PATHINFO_EXTENSION);
         $isImage = in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'webp']);
 
         if (!$isImage) {
+            return [
+                'path' => $path,
+                'variants' => []
+            ];
+        }
+
+        // Additional check: Ensure it's a valid image file before reading
+        $mime = File::mimeType($path);
+        if (!str_starts_with($mime, 'image/')) {
             return [
                 'path' => $path,
                 'variants' => []
@@ -91,15 +113,20 @@ class MediaProcessor
         $quality = $this->config['image_processing']['quality'] ?? 85;
 
         foreach ($variantConfigs as $suffix => $maxWidth) {
-            $image = $this->manager->read($path);
-            
-            // Condition: Do not upscale
-            if ($image->width() > $maxWidth) {
-                $image->scale(width: $maxWidth);
-                $variantName = "{$basename}-{$suffix}.webp";
-                $variantPath = "{$dirname}/{$variantName}";
-                $image->toWebp($quality)->save($variantPath);
-                $variants[] = $suffix;
+            try {
+                $image = $this->manager->read($path);
+                
+                // Condition: Do not upscale
+                if ($image->width() > $maxWidth) {
+                    $image->scale(width: $maxWidth);
+                    $variantName = "{$basename}-{$suffix}.webp";
+                    $variantPath = "{$dirname}/{$variantName}";
+                    $image->toWebp($quality)->save($variantPath);
+                    $variants[] = $suffix;
+                }
+            } catch (\Exception $e) {
+                \Log::error("Failed to generate variant {$suffix} for {$path}: " . $e->getMessage());
+                continue;
             }
         }
 

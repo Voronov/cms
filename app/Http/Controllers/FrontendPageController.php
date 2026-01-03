@@ -23,13 +23,23 @@ class FrontendPageController extends Controller
      */
     public function show(Request $request, string $path = '/')
     {
+        // Use path info to get the actual request path, which includes trailing slashes if present
+        $path = $request->getPathInfo();
+        
+        // Normalize for lookup: remove trailing slash unless it's just "/"
+        $normalizedPath = $path === '/' ? '/' : rtrim($path, '/');
+        if (empty($normalizedPath)) $normalizedPath = '/';
+        
+        // Get the site ID from the middleware
+        $siteId = $request->attributes->get('site_id');
+        
         // Load cache configuration
         $cacheConfig = Yaml::parseFile(resource_path('cache.yaml'));
         $cacheEnabled = $cacheConfig['pages']['enabled'] ?? true;
         $cacheTtl = $cacheConfig['pages']['ttl'] ?? 300;
         
         $locale = app()->getLocale();
-        $cacheKey = "page:{$locale}:{$path}";
+        $cacheKey = "page:{$siteId}:{$locale}:{$normalizedPath}";
         
         // Try to get from cache
         if ($cacheEnabled) {
@@ -42,8 +52,8 @@ class FrontendPageController extends Controller
         $mediaConfig = Yaml::parseFile(resource_path('media.yaml'));
         $defaultLocale = $this->languageService->getDefaultLocale();
 
-        if ($path === '/' || $path === '') {
-            $page = Page::where('is_root', true)->where('is_published', true)->first();
+        if ($normalizedPath === '/') {
+            $page = Page::where('id', $siteId)->where('is_root', true)->first();
             if ($page) {
                 $translation = $page->translation($locale);
                 if ($translation && $translation->is_published) {
@@ -53,14 +63,14 @@ class FrontendPageController extends Controller
             abort(404);
         }
 
-        $segments = explode('/', ltrim($path, '/'));
+        $segments = explode('/', trim($normalizedPath, '/'));
 
         // Strip locale prefix if present
         if ($segments[0] === $locale && $locale !== $defaultLocale) {
             array_shift($segments);
             if (empty($segments)) {
                 // If it was just "/es", attempt to load root page for that locale
-                $page = Page::where('is_root', true)->where('is_published', true)->first();
+                $page = Page::where('id', $siteId)->where('is_root', true)->first();
                 if ($page) {
                     $translation = $page->translation($locale);
                     if (!$translation) {
@@ -76,7 +86,13 @@ class FrontendPageController extends Controller
             }
         }
 
-        $parentId = null;
+        // Start from the root page for this site
+        $rootPage = Page::where('id', $siteId)->where('is_root', true)->first();
+        if (!$rootPage) {
+            abort(404);
+        }
+
+        $parentId = $rootPage->id;
         $page = null;
 
         foreach ($segments as $segment) {
@@ -102,7 +118,7 @@ class FrontendPageController extends Controller
             }
 
             if (!$page) {
-                $redirect = Redirect::where('from_url', '/' . ltrim($path, '/'))->first();
+                $redirect = Redirect::where('from_url', '/' . ltrim($normalizedPath, '/'))->first();
                 if ($redirect) {
                     return redirect($redirect->to_url, $redirect->status_code);
                 }

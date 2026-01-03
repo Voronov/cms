@@ -18,8 +18,13 @@
 @endsection
 
 @section('content')
+@push('schema')
+    @schema($entity, [$entity->type => route('entities.show', ['type' => $entity->type, 'slug' => $entity->getSlug()])])
+@endpush
 <div class="bg-white dark:bg-gray-900">
     <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        @breadcrumbs([ucfirst($entity->type) => route('entities.index', $entity->type), $entity->getField('title') => '#'])
+        
         @php
             $category = $entity->getField('category');
         @endphp
@@ -54,7 +59,9 @@
 
         @if($featuredImage)
             <div class="mb-12 rounded-2xl overflow-hidden shadow-2xl">
-                <img src="{{ $featuredImage->getUrl() }}" alt="{{ $entity->getField('title') }}" class="w-full h-auto object-cover">
+                <img src="{{ $featuredImage->getUrl() }}" 
+                     alt="{{ $entity->getField('image_alt') ?? $entity->getField('title') }}" 
+                     class="w-full h-auto object-cover">
             </div>
         @endif
 
@@ -68,8 +75,11 @@
             @endphp
 
             @if(!empty($blocks))
-                @foreach($blocks as $block)
-                    @includeIf('blocks.' . $block['type'], ['data' => $block['data']])
+                @foreach($blocks as $index => $block)
+                    @includeIf('blocks.' . $block['type'], [
+                        'data' => $block['data'], 
+                        'isFirst' => ($index === 0 && !$featuredImage)
+                    ])
                 @endforeach
             @endif
         </div>

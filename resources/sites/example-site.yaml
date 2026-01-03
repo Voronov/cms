@@ -1,0 +1,76 @@
+# Site Configuration Example
+# Copy this file and rename it to match your site_key (e.g., test-site.yaml, dev-site.yaml)
+
+# Site identification
+site_key: example-site
+name: Example Site
+
+# Domain configuration
+# List all domains that should serve this site
+domains:
+  - https://example.com
+  - https://www.example.com
+  # Add DDEV domains for local development
+  # - https://example.ddev.site
+  # - https://test.cms.local
+
+# Primary domain (used for URL generation)
+primary_domain: https://example.com
+
+# Language configuration
+languages:
+  en:
+    name: English
+    native: English
+    default: true
+    mode: standalone  # standalone, copy, or reference
+  es:
+    name: Spanish
+    native: Español
+    default: false
+    mode: copy
+  fr:
+    name: French
+    native: Français
+    default: false
+    mode: standalone
+
+# Default language
+default_locale: en
+
+# Cache configuration (optional - overrides global settings)
+cache:
+  enabled: true
+  ttl: 3600
+  driver: file
+
+# Media configuration (optional - overrides global settings)
+media:
+  max_upload_size: 10240  # KB
+  allowed_types:
+    - image/jpeg
+    - image/png
+    - image/gif
+    - image/webp
+  image_sizes:
+    thumbnail:
+      width: 150
+      height: 150
+    medium:
+      width: 600
+      height: 400
+    large:
+      width: 1200
+      height: 800
+
+# SEO defaults
+seo:
+  default_title_suffix: " | Example Site"
+  default_description: "Welcome to Example Site"
+  og_image: /images/default-og.jpg
+
+# Feature flags
+features:
+  comments_enabled: false
+  search_enabled: true
+  newsletter_enabled: true

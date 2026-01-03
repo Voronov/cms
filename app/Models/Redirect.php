@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Redirect extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'from_url',
         'to_url',

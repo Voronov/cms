@@ -13,6 +13,7 @@ use Illuminate\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use App\Services\LanguageService;
+use App\Services\SiteContextService;
 
 class PageController extends Controller
 {
@@ -66,7 +67,9 @@ class PageController extends Controller
         $locales = $this->languageService->getLanguages();
         $currentLocale = $request->query('locale', $this->languageService->getDefaultLocale());
 
-        return view('admin.pages.create', compact('tree', 'parents', 'layouts', 'selectedParentId', 'blocks', 'mediaConfig', 'activePath', 'locales', 'currentLocale'));
+        $hasRootPage = Page::where('is_root', true)->exists();
+
+        return view('admin.pages.create', compact('tree', 'parents', 'layouts', 'selectedParentId', 'blocks', 'mediaConfig', 'activePath', 'locales', 'currentLocale', 'hasRootPage'));
     }
 
     /**
@@ -92,11 +95,6 @@ class PageController extends Controller
             'og_description' => 'nullable|string',
         ]);
 
-        // Ensure only one root page exists
-        if ($request->boolean('is_root')) {
-            Page::where('is_root', true)->update(['is_root' => false]);
-        }
-
         $slug = $request->filled('slug') ? Str::slug($request->slug) : Str::slug($request->title);
 
         // Ensure unique slug within scope for auto-generated cases
@@ -109,13 +107,26 @@ class PageController extends Controller
             }
         }
 
+        // Set page type and handle root page logic
+        $pageType = $request->input('page_type', Page::PAGE_TYPE_REGULAR);
+        $isRoot = $pageType === Page::PAGE_TYPE_ROOT || $request->boolean('is_root');
+
+        // Get next order value for this parent
+        $maxOrder = Page::where('parent_id', $request->parent_id)->max('order') ?? 0;
+
+        // 404 pages should not be included in sitemap by default
+        $sitemapInclude = $pageType === Page::PAGE_TYPE_404 ? false : $request->boolean('sitemap_include', true);
+
         $page = Page::create([
-            'is_root' => $request->boolean('is_root'),
+            'is_root' => $isRoot,
+            'page_type' => $pageType,
+            'order' => $maxOrder + 1,
             'parent_id' => $request->parent_id,
             'layout' => $request->layout ?? 'default',
-            'sitemap_include' => $request->boolean('sitemap_include', true),
+            'sitemap_include' => $sitemapInclude,
             'sitemap_priority' => $request->input('sitemap_priority', 0.8),
             'sitemap_changefreq' => $request->input('sitemap_changefreq', 'weekly'),
+            'robots_noindex' => $request->boolean('robots_noindex'),
         ]);
 
         $locale = $request->input('locale', $this->languageService->getDefaultLocale());
@@ -131,6 +142,7 @@ class PageController extends Controller
             'og_description' => $request->input('og_description'),
             'og_image' => $request->input('og_image'),
             'is_published' => $request->has('is_published'),
+            'robots_noindex' => $request->boolean('robots_noindex'),
         ]);
 
         return redirect()->route('admin.pages.edit', ['page' => $page->id, 'locale' => $locale])->with('success', 'Page created successfully.');
@@ -183,7 +195,9 @@ class PageController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.pages.edit', compact('page', 'tree', 'parents', 'layouts', 'blocks', 'mediaConfig', 'activePath', 'locales', 'currentLocale', 'translation', 'redirects'));
+        $hasRootPage = Page::where('is_root', true)->exists();
+
+        return view('admin.pages.edit', compact('page', 'tree', 'parents', 'layouts', 'blocks', 'mediaConfig', 'activePath', 'locales', 'currentLocale', 'translation', 'redirects', 'hasRootPage'));
     }
 
     /**
@@ -223,23 +237,37 @@ class PageController extends Controller
             return back()->withErrors(['parent_id' => 'Page cannot be its own parent.']);
         }
 
-        // Ensure only one root page exists
-        if ($request->boolean('is_root')) {
-            Page::where('is_root', true)->where('id', '!=', $id)->update(['is_root' => false]);
+        // Determine the slug
+        if ($request->filled('regenerate_slug') && ($request->input('regenerate_slug') === '1' || $request->input('regenerate_slug') === true)) {
+            // Force regenerate from title
+            $slug = Str::slug($request->title);
+        } elseif ($request->filled('slug') && !empty($request->slug)) {
+            // Use provided slug
+            $slug = Str::slug($request->slug);
+        } else {
+            // Keep old slug or generate from title
+            $slug = $oldSlug ?? Str::slug($request->title);
         }
 
-        $slug = $request->filled('slug') ? Str::slug($request->slug) : ($oldSlug ?? $page->slug);
-
-        $data = [
+        $updateData = [
             'is_root' => $request->boolean('is_root'),
             'parent_id' => $request->parent_id,
             'layout' => $request->layout ?? 'default',
             'sitemap_include' => $request->boolean('sitemap_include'),
             'sitemap_priority' => $request->input('sitemap_priority'),
             'sitemap_changefreq' => $request->input('sitemap_changefreq'),
+            'robots_noindex' => $request->boolean('robots_noindex'),
         ];
 
-        $page->update($data);
+        if ($request->has('system_config') && is_array($request->input('system_config'))) {
+            $updateData['system_config'] = $request->input('system_config');
+        }
+
+        $page->update($updateData);
+
+        if ($page->is_root) {
+            SiteContextService::clearCache();
+        }
 
         $page->translations()->updateOrCreate(
             ['locale' => $locale],
@@ -253,11 +281,16 @@ class PageController extends Controller
                 'og_description' => $request->input('og_description'),
                 'og_image' => $request->input('og_image'),
                 'is_published' => $request->has('is_published'),
+                'robots_noindex' => $request->boolean('robots_noindex'),
             ]
         );
 
+        $page = $page->fresh();
+        $translation = $page->translation($locale);
+        $slug = $translation->slug;
+
         // Handle Automatic Redirects
-        if ($request->boolean('create_redirect') && $oldSlug && $oldSlug !== $slug) {
+        if (($request->input('create_redirect') === '1' || $request->input('create_redirect') === true) && $oldSlug && $oldSlug !== $slug) {
             $this->createRedirects($page, $oldPath, $locale);
         }
 
@@ -301,14 +334,43 @@ class PageController extends Controller
         ]);
 
         $page = Page::findOrFail($id);
+        $newParentId = $request->input('parent_id');
 
         // Prevent circular dependency
-        if ($request->parent_id == $id) {
-            return response()->json(['error' => 'Cannot be own parent'], 422);
+        if ($newParentId == $id || ($newParentId && $page->isAncestorOf($newParentId))) {
+            return response()->json(['error' => 'Cannot create circular reference'], 422);
         }
 
-        $page->parent_id = $request->parent_id;
-        $page->save();
+        // Get the root page for the current page
+        $currentRoot = $page->getRootPage();
+        
+        // Get the root page for the new parent
+        if ($newParentId) {
+            $newParent = Page::findOrFail($newParentId);
+            $newRoot = $newParent->is_root ? $newParent : $newParent->getRootPage();
+        } else {
+            // Moving to root level - not allowed unless the page itself is a root page
+            if (!$page->is_root) {
+                return response()->json(['error' => 'Cannot move page to root level. Pages must belong to a site.'], 422);
+            }
+            $newRoot = null;
+        }
+
+        // Prevent moving pages between different sites
+        if ($currentRoot && $newRoot && $currentRoot->id !== $newRoot->id) {
+            return response()->json(['error' => 'Cannot move pages between different sites'], 422);
+        }
+
+        // Get the max order for the new parent
+        $maxOrder = Page::where('parent_id', $newParentId)->max('order') ?? 0;
+
+        $page->update([
+            'parent_id' => $newParentId,
+            'order' => $maxOrder + 1,
+        ]);
+
+        // Reorder siblings in the new parent
+        $this->reorderSiblings($newParentId);
 
         return response()->json(['success' => true]);
     }
@@ -353,6 +415,15 @@ class PageController extends Controller
         }
 
         return $path;
+    }
+
+    private function reorderSiblings($parentId)
+    {
+        $siblings = Page::where('parent_id', $parentId)->orderBy('order')->get();
+        
+        foreach ($siblings as $index => $sibling) {
+            $sibling->update(['order' => $index + 1]);
+        }
     }
 
     private function createRedirects(Page $page, string $oldPath, string $locale)

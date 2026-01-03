@@ -1,0 +1,64 @@
+navigation:
+  - name: Dashboard
+    route: admin.dashboard
+    icon: home
+    section: main
+    order: 1
+  - name: Pages
+    route: admin.pages.index
+    icon: document
+    section: content
+    order: 2
+  - name: News
+    route: admin.entities.index
+    params: { type: news }
+    icon: newspaper
+    section: content
+    order: 3
+  - name: Products
+    route: admin.entities.index
+    params: { type: product }
+    icon: shopping-bag
+    section: content
+    order: 4
+  - name: Articles
+    route: admin.entities.index
+    params: { type: article }
+    icon: document-text
+    section: content
+    order: 5
+  - name: Forms
+    route: admin.forms.index
+    icon: clipboard
+    section: content
+    order: 6
+  - name: Menus
+    route: admin.menus.index
+    icon: menu
+    section: content
+    order: 7
+  - name: Media
+    route: admin.media.index
+    icon: photograph
+    section: content
+    order: 8
+  - name: Redirects
+    route: admin.redirects.index
+    icon: arrow-right
+    section: settings
+    order: 9
+  - name: Cache
+    route: admin.cache.index
+    icon: lightning-bolt
+    section: settings
+    order: 10
+  - name: Trash
+    route: admin.trash.index
+    icon: trash
+    section: settings
+    order: 11
+  - name: Users
+    route: admin.users
+    icon: users
+    section: admin
+    order: 12
