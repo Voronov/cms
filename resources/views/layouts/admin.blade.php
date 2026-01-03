@@ -19,6 +19,7 @@
             </main>
         </div>
     </div>
+    @include('partials.admin.image-library-modal')
     @stack('scripts')
 </body>
 

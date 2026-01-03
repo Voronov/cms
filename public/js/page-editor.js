@@ -29,9 +29,28 @@ document.addEventListener('alpine:init', () => {
                 });
 
                 this.initSortable();
+
+                // Listen for image selection from the global modal
+                window.addEventListener('image-selected', (e) => {
+                    const { url, path, id, target } = e.detail;
+                    if (target && target.blockIndex !== undefined && target.fieldName) {
+                        this.pageBlocks[target.blockIndex].data[target.fieldName] = url;
+                        this.pageBlocks[target.blockIndex].data[target.fieldName + '_path'] = path;
+                        this.pageBlocks[target.blockIndex].data[target.fieldName + '_id'] = id;
+                    }
+                });
             } catch (error) {
                 console.error('Failed to load entity types:', error);
             }
+        },
+
+        openImageLibrary(blockIndex, fieldName) {
+            window.dispatchEvent(new CustomEvent('open-image-library', {
+                detail: {
+                    target: { blockIndex, fieldName },
+                    aspectRatio: NaN // Can be customized per field if needed
+                }
+            }));
         },
 
         initSortable() {
@@ -184,51 +203,60 @@ document.addEventListener('alpine:init', () => {
 
         renderPreview(block) {
             const blockType = this.blockTypes.find(b => b.id === block.type);
-            if (!blockType || !blockType.preview || !blockType.preview.template) {
-                return '<div class="p-4 text-gray-500 italic">No preview available</div>';
+            if (!blockType || !blockType.preview) {
+                return null;
             }
-            
-            let template = blockType.preview.template;
-            const openBrace = '[[';
-            const closeBrace = ']]';
-            
-            // Replace placeholders with actual data or formatted values
-            Object.keys(block.data).forEach(key => {
-                const field = blockType.fields.find(f => f.name === key);
-                let value = block.data[key];
 
-                // For select fields, try to get the label instead of the key
-                if (field && field.type === 'select' && field.options && field.options[value]) {
-                    value = field.options[value];
-                }
-
-                const pattern1 = openBrace + ' ' + key + ' ' + closeBrace;
-                const pattern2 = openBrace + key + closeBrace;
+            // If template exists in YAML, use it
+            if (blockType.preview.template) {
+                let html = blockType.preview.template;
                 
-                template = template.split(pattern1).join(value || '');
-                template = template.split(pattern2).join(value || '');
+                // Simple regex-based template engine for [[ field ]]
+                const matches = html.match(/\[\[\s*([^\]|]+?)\s*(?:\|\|\s*([^\]]+?)\s*)?\]\]/g);
+                if (matches) {
+                    matches.forEach(match => {
+                        const parts = match.match(/\[\[\s*([^\]|]+?)\s*(?:\|\|\s*([^\]]+?)\s*)?\]\]/);
+                        const fieldName = parts[1].trim();
+                        const defaultValue = parts[2] ? parts[2].trim().replace(/^'|'$/g, '') : '';
+                        
+                        let value = block.data[fieldName];
+                        if (value === undefined || value === null || value === '') {
+                            value = defaultValue;
+                        }
+                        
+                        html = html.replace(match, value);
+                    });
+                }
+                return html;
+            }
+
+            if (!blockType.preview.fields) {
+                return '<span class="text-xs text-gray-400 italic">No content preview</span>';
+            }
+
+            let previewData = [];
+            
+            blockType.preview.fields.forEach(field => {
+                let value = block.data[field.name];
+                if (!value) return;
+
+                if (field.type === 'image') {
+                    // Handle storage URLs if they are relative paths
+                    let imgSrc = value;
+                    if (value && !value.startsWith('http') && !value.startsWith('/')) {
+                        imgSrc = '/storage/' + value;
+                    }
+                    previewData.push(`<img src="${imgSrc}" class="h-10 w-10 object-cover rounded shadow-sm inline-block" />`);
+                } else if (field.type === 'text') {
+                    let text = value.toString().replace(/<[^>]*>/g, ''); // Strip HTML if any
+                    if (field.limit && text.length > field.limit) {
+                        text = text.substring(0, field.limit) + '...';
+                    }
+                    previewData.push(`<span class="text-xs text-gray-500 dark:text-gray-400 font-normal truncate max-w-xs">${text}</span>`);
+                }
             });
-            
-            // Handle defaults and clean up remaining placeholders
-            let startIndex = 0;
-            while (true) {
-                const start = template.indexOf(openBrace, startIndex);
-                if (start === -1) break;
-                
-                const end = template.indexOf(closeBrace, start);
-                if (end === -1) break;
-                
-                const fullMatch = template.substring(start, end + 2);
-                if (fullMatch.includes('||')) {
-                    const parts = fullMatch.split('||');
-                    const defaultValue = parts[1].trim().replace(/['"]/g, '').replace(/\]\]/g, '').trim();
-                    template = template.substring(0, start) + defaultValue + template.substring(end + 2);
-                } else {
-                    template = template.substring(0, start) + template.substring(end + 2);
-                }
-            }
-            
-            return template;
+
+            return previewData.length > 0 ? previewData.join('<span class="mx-2 text-gray-300">|</span>') : '<span class="text-xs text-gray-400 italic">No content preview</span>';
         },
 
         removeBlock(index) {

@@ -108,6 +108,16 @@ class Entity extends Model
         return $this->hasMany(EntityFile::class);
     }
 
+    public function translations(): HasMany
+    {
+        return $this->hasMany(\App\Models\EntityTranslation::class);
+    }
+
+    public function translation(string $locale): ?\App\Models\EntityTranslation
+    {
+        return $this->translations()->where('locale', $locale)->first();
+    }
+
     public function getFilesByField(string $fieldName)
     {
         return $this->files()->where('field_name', $fieldName)->orderBy('order')->get();

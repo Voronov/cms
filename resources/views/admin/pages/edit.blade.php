@@ -370,10 +370,16 @@
                                         <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded" x-text="block.name"></span>
                                         <span x-text="'#' + (index + 1)"></span>
                                         <template x-if="block.collapsed">
-                                            <span class="text-xs text-gray-500 dark:text-gray-400 font-normal truncate max-w-xs ml-2" x-text="block.data.title || block.data.content?.substring(0, 50) + '...' || ''"></span>
+                                            <div class="flex items-center ml-4 space-x-2" x-html="renderPreview(block)"></div>
                                         </template>
                                     </div>
                                     <div class="flex items-center space-x-2" @click.stop>
+                                        <button type="button" @click="toggleBlockCollapse(index)"
+                                            class="p-1 text-gray-400 hover:text-indigo-600" title="Edit this block">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
                                         <button type="button" @click="saveBlock(index)"
                                             class="p-1 text-gray-400 hover:text-green-600" title="Save this block">
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
@@ -482,31 +488,38 @@
                                             <template x-if="field.type === 'file'">
                                                 <div class="mt-1 space-y-2">
                                                     <div class="flex items-center space-x-4">
-                                                        <div class="flex-1">
-                                                            <input type="text" x-model="block.data[field.name]" placeholder="URL or path"
-                                                                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                                        <div class="flex-shrink-0 w-24 h-24 border rounded bg-gray-100 dark:bg-gray-700 overflow-hidden flex items-center justify-center">
+                                                            <template x-if="block.data[field.name]">
+                                                                <img :src="block.data[field.name]" class="w-full h-full object-cover">
+                                                            </template>
+                                                            <template x-if="!block.data[field.name]">
+                                                                <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                </svg>
+                                                            </template>
                                                         </div>
-                                                        <div class="flex-shrink-0">
-                                                            <label class="cursor-pointer bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                                                <span>Upload</span>
-                                                                <input type="file" class="hidden" @change="handleFileUpload($event, index, field.name)">
-                                                            </label>
+                                                        <div class="flex-1 space-y-2">
+                                                            <div class="flex items-center space-x-2">
+                                                                <input type="text" x-model="block.data[field.name]" placeholder="URL or path"
+                                                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                                            </div>
+                                                            <div class="flex items-center space-x-2">
+                                                                <button type="button" @click="openImageLibrary(index, field.name)"
+                                                                    class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                                                                    <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                    Library / Upload
+                                                                </button>
+                                                                <template x-if="block.data[field.name]">
+                                                                    <button type="button" @click="block.data[field.name] = ''; block.data[field.name + '_path'] = ''; block.data[field.name + '_id'] = '';"
+                                                                        class="text-red-600 hover:text-red-900 text-xs font-medium">
+                                                                        Remove
+                                                                    </button>
+                                                                </template>
+                                                            </div>
                                                         </div>
-                                                        <template x-if="['jpg', 'jpeg', 'png', 'webp'].includes(block.data[field.name]?.split('.').pop()?.toLowerCase())">
-                                                            <button type="button" @click="initCropper(index, field.name, block.data[field.name], block.data[field.name + '_path'] || block.data[field.name])"
-                                                                class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
-                                                                Crop
-                                                            </button>
-                                                        </template>
                                                     </div>
-
-                                                    <!-- Progress Bar -->
-                                                    <template x-if="block.uploads && block.uploads[field.name]">
-                                                        <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-1 overflow-hidden">
-                                                            <div class="bg-indigo-600 h-1 transition-all duration-300" 
-                                                                :style="'width: ' + block.uploads[field.name].progress + '%'"></div>
-                                                        </div>
-                                                    </template>
                                                 </div>
                                             </template>
                                         </div>

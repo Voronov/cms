@@ -2,19 +2,52 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Media;
 use App\Services\MediaProcessor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class MediaController extends Controller
 {
     protected MediaProcessor $processor;
+    protected ImageManager $manager;
 
     public function __construct(MediaProcessor $processor)
     {
         $this->processor = $processor;
+        $this->manager = new ImageManager(new Driver());
+    }
+
+    public function index(Request $request)
+    {
+        $media = Media::latest()->paginate(24);
+        
+        if ($request->wantsJson()) {
+            return response()->json($media);
+        }
+
+        return view('admin.media.index', compact('media'));
+    }
+
+    public function show(Media $media)
+    {
+        $usage = $media->getUsage();
+        return response()->json([
+            'media' => $media,
+            'usage' => $usage
+        ]);
+    }
+
+    public function destroy(Media $media)
+    {
+        Storage::disk('public')->delete($media->path);
+        $media->delete();
+
+        return response()->json(['success' => true]);
     }
 
     public function upload(Request $request)
@@ -73,12 +106,23 @@ class MediaController extends Controller
             $request->input('height')
         );
 
-        $publicUrl = Storage::url('media/' . basename($processedPath));
+        $image = $this->manager->read($processedPath);
+        
+        $media = Media::create([
+            'filename' => basename($processedPath),
+            'original_name' => 'cropped_' . basename($relativePath),
+            'path' => 'media/' . basename($processedPath),
+            'mime_type' => File::mimeType($processedPath),
+            'size' => File::size($processedPath),
+            'width' => $image->width(),
+            'height' => $image->height(),
+        ]);
 
         return response()->json([
             'success' => true,
-            'url' => $publicUrl,
-            'path' => 'media/' . basename($processedPath)
+            'url' => Storage::url($media->path),
+            'path' => $media->path,
+            'media_id' => $media->id
         ]);
     }
 
@@ -106,15 +150,25 @@ class MediaController extends Controller
         // Clean up chunks
         Storage::disk('local')->deleteDirectory($tempPath);
 
-        // Process image (WebP, scale, etc.)
         $processedPath = $this->processor->process($finalPath);
 
-        $publicUrl = Storage::url('media/' . basename($processedPath));
+        $image = $this->manager->read($processedPath);
+
+        $media = Media::create([
+            'filename' => basename($processedPath),
+            'original_name' => $originalName,
+            'path' => 'media/' . basename($processedPath),
+            'mime_type' => File::mimeType($processedPath),
+            'size' => File::size($processedPath),
+            'width' => $image->width(),
+            'height' => $image->height(),
+        ]);
 
         return response()->json([
             'success' => true,
-            'url' => $publicUrl,
-            'path' => 'media/' . basename($processedPath)
+            'url' => Storage::url($media->path),
+            'path' => $media->path,
+            'media_id' => $media->id
         ]);
     }
 }

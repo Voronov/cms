@@ -75,35 +75,7 @@ fields:
     required: false
     placeholder: Brief summary of the news
     validation: string|max:500
-    
-  - name: content
-    label: Content
-    type: wysiwyg
-    required: true
-    placeholder: Write your news content here
-    validation: required|string
-    
-  - name: featured_image
-    label: Featured Image
-    type: media
-    required: false
-    accept: image/*
-    validation: nullable|string
-    
-  - name: published_at
-    label: Publish Date
-    type: datetime
-    required: true
-    default: now
-    validation: required|date
-    
-  - name: expires_at
-    label: Expiration Date
-    type: datetime
-    required: false
-    placeholder: Leave empty for no expiration
-    validation: nullable|date|after:published_at
-    
+
   - name: author
     label: Author
     type: text
@@ -117,6 +89,19 @@ fields:
     required: false
     validation: nullable|string
     help: Select a category for this news item
+
+  - name: blocks
+    label: News Content Blocks
+    type: blocks
+    required: false
+    help: Build the news content using blocks
+    
+  - name: featured_image
+    label: Featured Image
+    type: media
+    required: false
+    accept: image/*
+    validation: nullable|string
     
   - name: status
     label: Status

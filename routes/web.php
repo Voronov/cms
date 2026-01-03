@@ -82,6 +82,8 @@ Route::middleware(['auth', 'verified', 'approved', 'nocache'])->prefix('admin')-
     Route::post('/crons/{task}/run', [\App\Http\Controllers\CronTaskController::class, 'run'])->name('admin.crons.run');
     Route::post('/crons/{task}/toggle', [\App\Http\Controllers\CronTaskController::class, 'toggle'])->name('admin.crons.toggle');
 
+    Route::resource('media', \App\Http\Controllers\MediaController::class, ['as' => 'admin'])->except(['create', 'edit', 'update']);
+
 
 
     Route::get('/entities/{type}', [EntityController::class, 'index'])->name('admin.entities.index');
@@ -110,6 +112,9 @@ Route::get('/sitemap.xml', [App\Http\Controllers\SitemapController::class, 'inde
 // Public Form Routes
 Route::get('/forms/{identifier}', [FormFrontendController::class, 'show'])->name('forms.show');
 Route::post('/forms/{identifier}', [FormFrontendController::class, 'submit'])->name('forms.submit');
+
+// Entity Detail Routes
+Route::get('/{type}/{slug}', [\App\Http\Controllers\FrontendEntityController::class, 'show'])->name('entities.show');
 
 // Frontend Catch-all Route (Must be last)
 Route::get('/{any}', [App\Http\Controllers\FrontendPageController::class, 'show'])->where('any', '.*');

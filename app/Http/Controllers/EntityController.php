@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Entity;
 use App\Models\EntityFile;
 use App\Models\Redirect;
+use App\Models\EntityTranslation;
 use App\Services\EntityDefinitionService;
+use App\Services\LanguageService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -16,10 +18,12 @@ use Illuminate\Support\Facades\Cache;
 class EntityController extends Controller
 {
     protected EntityDefinitionService $entityDefinition;
+    protected LanguageService $languageService;
 
-    public function __construct(EntityDefinitionService $entityDefinition)
+    public function __construct(EntityDefinitionService $entityDefinition, LanguageService $languageService)
     {
         $this->entityDefinition = $entityDefinition;
+        $this->languageService = $languageService;
     }
 
     public function index(string $type): View
@@ -49,6 +53,9 @@ class EntityController extends Controller
         $definition = $this->entityDefinition->get($type);
         $fields = $this->entityDefinition->getFields($type);
         $defaults = $this->entityDefinition->getDefaultValues($type);
+        $mediaConfig = \Symfony\Component\Yaml\Yaml::parseFile(resource_path('media.yaml'));
+        $locales = $this->languageService->getLanguages();
+        $currentLocale = request()->query('locale', $this->languageService->getDefaultLocale());
 
         return view('admin.entities.create', [
             'type' => $type,
@@ -56,6 +63,10 @@ class EntityController extends Controller
             'fields' => $fields,
             'defaults' => $defaults,
             'singularName' => $this->entityDefinition->getSingularName($type),
+            'blocks' => $this->getAvailableBlocks(),
+            'mediaConfig' => $mediaConfig,
+            'locales' => $locales,
+            'currentLocale' => $currentLocale,
         ]);
     }
 
@@ -68,7 +79,14 @@ class EntityController extends Controller
         $fields = $this->entityDefinition->getFields($type);
         $rules = $this->buildValidationRules($fields);
         
-        $validated = $request->validate($rules);
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
+        $locale = $request->input('locale', $this->languageService->getDefaultLocale());
         
         // Separate file uploads from regular content
         $fileFields = [];
@@ -80,8 +98,9 @@ class EntityController extends Controller
             if ($field['type'] === 'file' && $request->hasFile($fieldName)) {
                 $fileFields[$fieldName] = $request->file($fieldName);
             } elseif ($field['type'] === 'repeater') {
-                // Handle repeater fields separately
                 $contentData[$fieldName] = $validated[$fieldName] ?? [];
+            } elseif ($field['type'] === 'blocks') {
+                $contentData[$fieldName] = json_decode($request->input($fieldName), true) ?? [];
             } elseif (isset($validated[$fieldName])) {
                 $contentData[$fieldName] = $validated[$fieldName];
             }
@@ -114,11 +133,18 @@ class EntityController extends Controller
 
         $entity = Entity::create([
             'type' => $type,
-            'content' => $contentData,
-            'seo' => $seoData,
+            'content' => [], // Base content can be empty if using translations
+            'seo' => [],
             'status' => $contentData['status'] ?? 'draft',
             'published_at' => $contentData['published_at'] ?? null,
             'expires_at' => $contentData['expires_at'] ?? null,
+        ]);
+
+        // Save translation
+        $entity->translations()->create([
+            'locale' => $locale,
+            'content' => $contentData,
+            'seo' => $seoData,
         ]);
 
         // Handle file uploads
@@ -149,13 +175,35 @@ class EntityController extends Controller
 
         $definition = $this->entityDefinition->get($type);
         $fields = $this->entityDefinition->getFields($type);
+        $locales = $this->languageService->getLanguages();
+        $currentLocale = request()->query('locale', $this->languageService->getDefaultLocale());
+        
+        $translation = $entity->translation($currentLocale);
+
+        // If translation doesn't exist, handle "copy" mode
+        if (!$translation && $this->languageService->getModeForLocale($currentLocale) === 'copy') {
+            $defaultTranslation = $entity->translation($this->languageService->getDefaultLocale());
+            if ($defaultTranslation) {
+                $translation = new EntityTranslation($defaultTranslation->toArray());
+                $translation->locale = $currentLocale;
+            }
+        }
+
+        if (!$translation) {
+            $translation = new EntityTranslation(['locale' => $currentLocale, 'content' => []]);
+        }
 
         return view('admin.entities.edit', [
             'type' => $type,
             'definition' => $definition,
             'fields' => $fields,
             'entity' => $entity,
+            'translation' => $translation,
+            'currentLocale' => $currentLocale,
+            'locales' => $locales,
             'singularName' => $this->entityDefinition->getSingularName($type),
+            'blocks' => $this->getAvailableBlocks(),
+            'mediaConfig' => \Symfony\Component\Yaml\Yaml::parseFile(resource_path('media.yaml')),
         ]);
     }
 
@@ -172,7 +220,14 @@ class EntityController extends Controller
         $fields = $this->entityDefinition->getFields($type);
         $rules = $this->buildValidationRules($fields, $entity->id);
         
-        $validated = $request->validate($rules);
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $validated = $validator->validated();
+        $locale = $request->input('locale', $this->languageService->getDefaultLocale());
         
         // Separate file uploads from regular content
         $fileFields = [];
@@ -185,6 +240,8 @@ class EntityController extends Controller
                 $fileFields[$fieldName] = $request->file($fieldName);
             } elseif ($field['type'] === 'repeater') {
                 $contentData[$fieldName] = $validated[$fieldName] ?? [];
+            } elseif ($field['type'] === 'blocks') {
+                $contentData[$fieldName] = json_decode($request->input($fieldName), true) ?? [];
             } elseif (isset($validated[$fieldName])) {
                 $contentData[$fieldName] = $validated[$fieldName];
             }
@@ -203,6 +260,17 @@ class EntityController extends Controller
                     // Ensure slug is properly formatted
                     $contentData['slug'] = Str::slug($contentData['slug']);
                 }
+
+                // Ensure uniqueness
+                $baseSlug = $contentData['slug'];
+                $counter = 1;
+                while (Entity::ofType($type)
+                    ->where('id', '!=', $entity->id)
+                    ->whereJsonContains('content->slug', $contentData['slug'])
+                    ->exists()) {
+                    $contentData['slug'] = $baseSlug . '-' . $counter;
+                    $counter++;
+                }
             }
         }
 
@@ -216,12 +284,18 @@ class EntityController extends Controller
         $seoData = $this->entityDefinition->buildSeoData($type, $contentData);
 
         $entity->update([
-            'content' => $contentData,
-            'seo' => $seoData,
             'status' => $contentData['status'] ?? 'draft',
             'published_at' => $contentData['published_at'] ?? null,
             'expires_at' => $contentData['expires_at'] ?? null,
         ]);
+
+        $entity->translations()->updateOrCreate(
+            ['locale' => $locale],
+            [
+                'content' => $contentData,
+                'seo' => $seoData,
+            ]
+        );
 
         // Handle file uploads
         foreach ($fileFields as $fieldName => $files) {
@@ -268,6 +342,30 @@ class EntityController extends Controller
             ->with('success', $this->entityDefinition->getSingularName($type) . ' deleted successfully.');
     }
 
+    private function getAvailableBlocks()
+    {
+        $blocksPath = resource_path('layouts');
+        if (!\Illuminate\Support\Facades\File::exists($blocksPath)) {
+            return [];
+        }
+
+        $blocks = [];
+        $directories = \Illuminate\Support\Facades\File::directories($blocksPath);
+
+        foreach ($directories as $directory) {
+            $blockName = basename($directory);
+            if ($blockName === 'admin') continue;
+            
+            $yamlFile = $directory . '/' . $blockName . '.yaml';
+            if (\Illuminate\Support\Facades\File::exists($yamlFile)) {
+                $config = \Symfony\Component\Yaml\Yaml::parseFile($yamlFile);
+                $config['id'] = $blockName;
+                $blocks[] = $config;
+            }
+        }
+        return $blocks;
+    }
+
     protected function buildValidationRules(array $fields, ?int $entityId = null): array
     {
         $rules = [];
@@ -277,7 +375,12 @@ class EntityController extends Controller
             $validation = $field['validation'] ?? '';
 
             if ($entityId && strpos($validation, 'unique:') !== false) {
-                $validation = str_replace('unique:', "unique:entities,content->{$fieldName},{$entityId}", $validation);
+                // For JSON fields like content->slug, we need to handle the unique rule carefully
+                if (strpos($validation, 'unique:entities,content->') !== false) {
+                    $validation = "unique:entities,content->{$fieldName},{$entityId},id";
+                } else {
+                    $validation = str_replace('unique:', "unique:entities,{$fieldName},{$entityId}", $validation);
+                }
             }
 
             if (!empty($validation)) {

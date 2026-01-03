@@ -19,11 +19,16 @@ navigation:
     icon: menu
     section: content
     order: 4
+  - name: Media
+    route: admin.media.index
+    icon: photograph
+    section: content
+    order: 5
   - name: Redirects
     route: admin.redirects.index
     icon: arrows
     section: content
-    order: 5
+    order: 6
   - name: Users
     route: admin.users
     icon: users
